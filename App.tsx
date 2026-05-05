@@ -1,8 +1,8 @@
-import { StatusBar } from 'expo-status-bar';
-import * as ImagePicker from 'expo-image-picker';
-import * as ImageManipulator from 'expo-image-manipulator';
-import jpeg from 'jpeg-js';
-import { useMemo, useState } from 'react';
+import { StatusBar } from "expo-status-bar";
+import * as ImagePicker from "expo-image-picker";
+import * as ImageManipulator from "expo-image-manipulator";
+import jpeg from "jpeg-js";
+import { useMemo, useState } from "react";
 import {
   Image,
   Platform,
@@ -13,10 +13,10 @@ import {
   Text,
   TextInput,
   View,
-} from 'react-native';
+} from "react-native";
 
-type TabKey = 'My Farm' | 'My Plants' | 'Home' | 'Calendar' | 'Doctor';
-type CropKey = 'lettuce' | 'basil' | 'strawberry' | 'spinach';
+type TabKey = "My Farm" | "My Plants" | "Home" | "Calendar" | "Doctor";
+type CropKey = "lettuce" | "basil" | "strawberry" | "spinach";
 
 type Diagnosis = {
   title: string;
@@ -34,7 +34,7 @@ type Diagnosis = {
 };
 
 type Plant = {
-  id: string;
+  id: string; //hi hello
   cropKey: CropKey;
   name: string;
   section: string;
@@ -72,23 +72,51 @@ type CalendarItem = {
   harvestDate: string;
 };
 
-const tabs: TabKey[] = ['My Farm', 'My Plants', 'Home', 'Calendar', 'Doctor'];
+const tabs: TabKey[] = ["My Farm", "My Plants", "Home", "Calendar", "Doctor"];
 
-const cropTargets: Record<CropKey, { temp: [number, number]; humidity: [number, number]; moisture: [number, number]; ph: [number, number] }> = {
-  lettuce: { temp: [18, 23], humidity: [55, 70], moisture: [64, 78], ph: [5.8, 6.4] },
-  basil: { temp: [21, 27], humidity: [50, 65], moisture: [58, 74], ph: [5.9, 6.6] },
-  strawberry: { temp: [18, 25], humidity: [55, 68], moisture: [60, 75], ph: [5.7, 6.5] },
-  spinach: { temp: [17, 24], humidity: [54, 72], moisture: [66, 82], ph: [6.0, 7.0] },
+const cropTargets: Record<
+  CropKey,
+  {
+    temp: [number, number];
+    humidity: [number, number];
+    moisture: [number, number];
+    ph: [number, number];
+  }
+> = {
+  lettuce: {
+    temp: [18, 23],
+    humidity: [55, 70],
+    moisture: [64, 78],
+    ph: [5.8, 6.4],
+  },
+  basil: {
+    temp: [21, 27],
+    humidity: [50, 65],
+    moisture: [58, 74],
+    ph: [5.9, 6.6],
+  },
+  strawberry: {
+    temp: [18, 25],
+    humidity: [55, 68],
+    moisture: [60, 75],
+    ph: [5.7, 6.5],
+  },
+  spinach: {
+    temp: [17, 24],
+    humidity: [54, 72],
+    moisture: [66, 82],
+    ph: [6.0, 7.0],
+  },
 };
 
 const initialPlants: Plant[] = [
   {
-    id: 'p1',
-    cropKey: 'lettuce',
-    name: 'Plant A',
-    section: 'Section 1',
-    variety: 'Butterhead lettuce',
-    plantedDate: '2026-04-12',
+    id: "p1",
+    cropKey: "lettuce",
+    name: "Plant A",
+    section: "Section 1",
+    variety: "Butterhead lettuce",
+    plantedDate: "2026-04-12",
     harvestDay: 31,
     temp: 24.1,
     humidity: 62,
@@ -101,12 +129,12 @@ const initialPlants: Plant[] = [
     history: [66, 71, 76, 78, 84, 86],
   },
   {
-    id: 'p2',
-    cropKey: 'basil',
-    name: 'Plant B',
-    section: 'Section 2',
-    variety: 'Genovese basil',
-    plantedDate: '2026-04-18',
+    id: "p2",
+    cropKey: "basil",
+    name: "Plant B",
+    section: "Section 2",
+    variety: "Genovese basil",
+    plantedDate: "2026-04-18",
     harvestDay: 28,
     temp: 25.6,
     humidity: 58,
@@ -119,12 +147,12 @@ const initialPlants: Plant[] = [
     history: [70, 75, 77, 82, 88, 91],
   },
   {
-    id: 'p3',
-    cropKey: 'strawberry',
-    name: 'Plant C',
-    section: 'Section 3',
-    variety: 'Albion strawberry',
-    plantedDate: '2026-03-29',
+    id: "p3",
+    cropKey: "strawberry",
+    name: "Plant C",
+    section: "Section 3",
+    variety: "Albion strawberry",
+    plantedDate: "2026-03-29",
     harvestDay: 48,
     temp: 23.4,
     humidity: 71,
@@ -139,15 +167,63 @@ const initialPlants: Plant[] = [
 ];
 
 const initialSections: FarmSection[] = [
-  { id: 's1', name: 'Section 1', plantId: 'p1', led: 76, fan: 74, pump: 48, nutrient: 62, auto: true },
-  { id: 's2', name: 'Section 2', plantId: 'p2', led: 84, fan: 42, pump: 38, nutrient: 34, auto: true },
-  { id: 's3', name: 'Section 3', plantId: 'p3', led: 88, fan: 58, pump: 64, nutrient: 42, auto: false },
+  {
+    id: "s1",
+    name: "Section 1",
+    plantId: "p1",
+    led: 76,
+    fan: 74,
+    pump: 48,
+    nutrient: 62,
+    auto: true,
+  },
+  {
+    id: "s2",
+    name: "Section 2",
+    plantId: "p2",
+    led: 84,
+    fan: 42,
+    pump: 38,
+    nutrient: 34,
+    auto: true,
+  },
+  {
+    id: "s3",
+    name: "Section 3",
+    plantId: "p3",
+    led: 88,
+    fan: 58,
+    pump: 64,
+    nutrient: 42,
+    auto: false,
+  },
 ];
 
 const initialCalendar: CalendarItem[] = [
-  { id: 'c1', plantId: 'p1', plantName: 'Plant A', cropKey: 'lettuce', plantedDate: '2026-04-12', harvestDate: '2026-05-13' },
-  { id: 'c2', plantId: 'p2', plantName: 'Plant B', cropKey: 'basil', plantedDate: '2026-04-18', harvestDate: '2026-05-16' },
-  { id: 'c3', plantId: 'p3', plantName: 'Plant C', cropKey: 'strawberry', plantedDate: '2026-03-29', harvestDate: '2026-05-16' },
+  {
+    id: "c1",
+    plantId: "p1",
+    plantName: "Plant A",
+    cropKey: "lettuce",
+    plantedDate: "2026-04-12",
+    harvestDate: "2026-05-13",
+  },
+  {
+    id: "c2",
+    plantId: "p2",
+    plantName: "Plant B",
+    cropKey: "basil",
+    plantedDate: "2026-04-18",
+    harvestDate: "2026-05-16",
+  },
+  {
+    id: "c3",
+    plantId: "p3",
+    plantName: "Plant C",
+    cropKey: "strawberry",
+    plantedDate: "2026-03-29",
+    harvestDate: "2026-05-16",
+  },
 ];
 
 const cropHarvestDays: Record<CropKey, number> = {
@@ -158,25 +234,26 @@ const cropHarvestDays: Record<CropKey, number> = {
 };
 
 const cropLabels: Record<CropKey, string> = {
-  lettuce: 'Lettuce',
-  basil: 'Basil',
-  strawberry: 'Strawberry',
-  spinach: 'Spinach',
+  lettuce: "Lettuce",
+  basil: "Basil",
+  strawberry: "Strawberry",
+  spinach: "Spinach",
 };
 
 const cropVarieties: Record<CropKey, string> = {
-  lettuce: 'Butterhead lettuce',
-  basil: 'Genovese basil',
-  strawberry: 'Albion strawberry',
-  spinach: 'Space F1 spinach',
+  lettuce: "Butterhead lettuce",
+  basil: "Genovese basil",
+  strawberry: "Albion strawberry",
+  spinach: "Space F1 spinach",
 };
 
 const waitingDiagnosis: Diagnosis = {
-  title: 'Take or upload a plant image',
+  title: "Take or upload a plant image",
   confidence: 0,
-  color: '#9aa1a8',
-  symptoms: 'Plant Doctor needs a leaf photo before it can verify and diagnose the plant.',
-  action: 'Use the camera or upload a close-up image of a plant leaf.',
+  color: "#9aa1a8",
+  symptoms:
+    "Plant Doctor needs a leaf photo before it can verify and diagnose the plant.",
+  action: "Use the camera or upload a close-up image of a plant leaf.",
   isPlant: false,
 };
 
@@ -188,7 +265,7 @@ function within(value: number, range: [number, number]) {
   return value >= range[0] && value <= range[1];
 }
 
-function daysBetween(startDate: string, endDate = '2026-05-05') {
+function daysBetween(startDate: string, endDate = "2026-05-05") {
   const start = new Date(`${startDate}T00:00:00`);
   const end = new Date(`${endDate}T00:00:00`);
   return Math.max(0, Math.round((end.getTime() - start.getTime()) / 86400000));
@@ -201,7 +278,10 @@ function addDays(date: string, days: number) {
 }
 
 function getAutoRecipe(plant: Plant) {
-  const recipes: Record<CropKey, Pick<FarmSection, 'led' | 'fan' | 'pump' | 'nutrient'>> = {
+  const recipes: Record<
+    CropKey,
+    Pick<FarmSection, "led" | "fan" | "pump" | "nutrient">
+  > = {
     lettuce: { led: 68, fan: 72, pump: 56, nutrient: 60 },
     basil: { led: 82, fan: 48, pump: 42, nutrient: 46 },
     strawberry: { led: 88, fan: 62, pump: 66, nutrient: 52 },
@@ -213,8 +293,16 @@ function getAutoRecipe(plant: Plant) {
   return {
     led: clamp(base.led + (plant.light > 85 ? -4 : 0), 0, 100),
     fan: clamp(base.fan + (plant.temp > target.temp[1] ? 10 : 0), 0, 100),
-    pump: clamp(base.pump + (plant.moisture < target.moisture[0] ? 12 : 0), 0, 100),
-    nutrient: clamp(base.nutrient + (!within(plant.ph, target.ph) ? 10 : 0), 0, 100),
+    pump: clamp(
+      base.pump + (plant.moisture < target.moisture[0] ? 12 : 0),
+      0,
+      100,
+    ),
+    nutrient: clamp(
+      base.nutrient + (!within(plant.ph, target.ph) ? 10 : 0),
+      0,
+      100,
+    ),
   };
 }
 
@@ -251,9 +339,9 @@ function createPlantFromSchedule({
     humidity: center.humidity,
     moisture: center.moisture,
     ph: center.ph,
-    light: cropKey === 'strawberry' ? 86 : cropKey === 'basil' ? 80 : 72,
-    waterToday: cropKey === 'strawberry' ? 5.0 : 3.8,
-    energyToday: cropKey === 'strawberry' ? 2.7 : 1.9,
+    light: cropKey === "strawberry" ? 86 : cropKey === "basil" ? 80 : 72,
+    waterToday: cropKey === "strawberry" ? 5.0 : 3.8,
+    energyToday: cropKey === "strawberry" ? 2.7 : 1.9,
     growthScore: 82,
     history: [64, 68, 72, 75, 79, 82],
   };
@@ -266,33 +354,39 @@ function getMonthDays(monthDate: Date) {
   const totalDays = new Date(year, month + 1, 0).getDate();
   return [
     ...Array.from({ length: firstDay }, () => null),
-    ...Array.from({ length: totalDays }, (_, index) => new Date(year, month, index + 1)),
+    ...Array.from(
+      { length: totalDays },
+      (_, index) => new Date(year, month, index + 1),
+    ),
   ];
 }
 
 function formatMonth(date: Date) {
-  return date.toLocaleString('en-US', { month: 'long', year: 'numeric' });
+  return date.toLocaleString("en-US", { month: "long", year: "numeric" });
 }
 
 function formatDateLocal(date: Date) {
   const year = date.getFullYear();
-  const month = `${date.getMonth() + 1}`.padStart(2, '0');
-  const day = `${date.getDate()}`.padStart(2, '0');
+  const month = `${date.getMonth() + 1}`.padStart(2, "0");
+  const day = `${date.getDate()}`.padStart(2, "0");
   return `${year}-${month}-${day}`;
 }
 
-function classifyPlantImageFromMetrics(metrics: Diagnosis['metrics']): Diagnosis {
+function classifyPlantImageFromMetrics(
+  metrics: Diagnosis["metrics"],
+): Diagnosis {
   if (!metrics) return waitingDiagnosis;
 
   const { plantScore, greenRatio, yellowRatio, brownRatio } = metrics;
 
   if (plantScore < 30 || greenRatio < 18) {
     return {
-      title: 'Image rejected',
+      title: "Image rejected",
       confidence: clamp(Math.round(96 - plantScore), 72, 96),
-      color: '#c14f3d',
+      color: "#c14f3d",
       symptoms: `Plant-like pixels are too low. Green coverage is ${greenRatio}% and plant score is ${plantScore}%.`,
-      action: 'Please upload or capture a clear plant leaf photo. GrowMind rejects selfies, screenshots, dark images, and non-plant objects.',
+      action:
+        "Please upload or capture a clear plant leaf photo. GrowMind rejects selfies, screenshots, dark images, and non-plant objects.",
       isPlant: false,
       metrics,
     };
@@ -300,11 +394,12 @@ function classifyPlantImageFromMetrics(metrics: Diagnosis['metrics']): Diagnosis
 
   if (yellowRatio + brownRatio > greenRatio * 1.4) {
     return {
-      title: 'Image rejected',
+      title: "Image rejected",
       confidence: 86,
-      color: '#c14f3d',
+      color: "#c14f3d",
       symptoms: `The image has too little leaf-green dominance. Green is ${greenRatio}%, while yellow/brown signals are ${yellowRatio + brownRatio}%.`,
-      action: 'Use a closer plant leaf photo with the leaf filling most of the frame.',
+      action:
+        "Use a closer plant leaf photo with the leaf filling most of the frame.",
       isPlant: false,
       metrics,
     };
@@ -312,11 +407,12 @@ function classifyPlantImageFromMetrics(metrics: Diagnosis['metrics']): Diagnosis
 
   if (yellowRatio > 18 && yellowRatio > brownRatio) {
     return {
-      title: 'Nitrogen deficiency likely',
+      title: "Nitrogen deficiency likely",
       confidence: clamp(72 + yellowRatio, 78, 94),
-      color: '#f0b429',
+      color: "#f0b429",
       symptoms: `Verified plant image. Yellow coverage is ${yellowRatio}%, suggesting chlorosis or nutrient stress.`,
-      action: 'Increase nitrogen by 8 percent, keep pH in range, and rescan after 48 hours.',
+      action:
+        "Increase nitrogen by 8 percent, keep pH in range, and rescan after 48 hours.",
       isPlant: true,
       metrics,
     };
@@ -324,11 +420,12 @@ function classifyPlantImageFromMetrics(metrics: Diagnosis['metrics']): Diagnosis
 
   if (brownRatio > 12) {
     return {
-      title: 'Leaf burn or disease risk',
+      title: "Leaf burn or disease risk",
       confidence: clamp(74 + brownRatio, 78, 93),
-      color: '#a45c37',
+      color: "#a45c37",
       symptoms: `Verified plant image. Brown or dry coverage is ${brownRatio}%, which may indicate edge burn, disease, or heat stress.`,
-      action: 'Check LED distance, lower canopy temperature, and isolate the tray if spots spread.',
+      action:
+        "Check LED distance, lower canopy temperature, and isolate the tray if spots spread.",
       isPlant: true,
       metrics,
     };
@@ -336,31 +433,34 @@ function classifyPlantImageFromMetrics(metrics: Diagnosis['metrics']): Diagnosis
 
   if (greenRatio > 34 && yellowRatio < 12 && brownRatio < 8) {
     return {
-      title: 'Healthy growth',
+      title: "Healthy growth",
       confidence: clamp(82 + Math.round(greenRatio / 4), 84, 97),
-      color: '#3f9b63',
+      color: "#3f9b63",
       symptoms: `Verified plant image. Green coverage is ${greenRatio}% with low yellow and brown stress signals.`,
-      action: 'Maintain the current crop profile and learned light/pump schedule.',
+      action:
+        "Maintain the current crop profile and learned light/pump schedule.",
       isPlant: true,
       metrics,
     };
   }
 
   return {
-    title: 'Mild stress detected',
+    title: "Mild stress detected",
     confidence: clamp(72 + Math.round(plantScore / 5), 76, 90),
-    color: '#d6604d',
+    color: "#d6604d",
     symptoms: `Verified plant image. Plant score is ${plantScore}%, but color balance suggests early stress.`,
-    action: 'Inspect leaf underside, stabilize humidity, and rescan under brighter natural light.',
+    action:
+      "Inspect leaf underside, stabilize humidity, and rescan under brighter natural light.",
     isPlant: true,
     metrics,
   };
 }
 
-const base64Chars = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789+/=';
+const base64Chars =
+  "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789+/=";
 
 function base64ToBytes(base64: string) {
-  const clean = base64.replace(/[^A-Za-z0-9+/=]/g, '');
+  const clean = base64.replace(/[^A-Za-z0-9+/=]/g, "");
   const bytes: number[] = [];
 
   for (let index = 0; index < clean.length; index += 4) {
@@ -380,7 +480,10 @@ function base64ToBytes(base64: string) {
   return new Uint8Array(bytes);
 }
 
-function analyzeRgbaPixels(data: Uint8Array | Uint8ClampedArray, pixelCount: number): Diagnosis {
+function analyzeRgbaPixels(
+  data: Uint8Array | Uint8ClampedArray,
+  pixelCount: number,
+): Diagnosis {
   let greenPixels = 0;
   let yellowPixels = 0;
   let brownPixels = 0;
@@ -397,12 +500,15 @@ function analyzeRgbaPixels(data: Uint8Array | Uint8ClampedArray, pixelCount: num
     const min = Math.min(red, green, blue);
     const saturation = max === 0 ? 0 : (max - min) / max;
 
-    if (alpha < 80 || brightness < 28 || brightness > 245 || saturation < 0.12) continue;
+    if (alpha < 80 || brightness < 28 || brightness > 245 || saturation < 0.12)
+      continue;
     usefulPixels += 1;
 
     const isGreen = green > red * 1.12 && green > blue * 1.12 && green > 55;
-    const isYellow = red > 120 && green > 105 && blue < 115 && Math.abs(red - green) < 70;
-    const isBrown = red > 75 && green > 38 && green < 135 && blue < 105 && red > blue * 1.25;
+    const isYellow =
+      red > 120 && green > 105 && blue < 115 && Math.abs(red - green) < 70;
+    const isBrown =
+      red > 75 && green > 38 && green < 135 && blue < 105 && red > blue * 1.25;
 
     if (isGreen) greenPixels += 1;
     if (isYellow) yellowPixels += 1;
@@ -412,11 +518,12 @@ function analyzeRgbaPixels(data: Uint8Array | Uint8ClampedArray, pixelCount: num
 
   if (usefulPixels < pixelCount * 0.12) {
     return {
-      title: 'Image rejected',
+      title: "Image rejected",
       confidence: 94,
-      color: '#c14f3d',
-      symptoms: 'The image is too dark, blank, or low-detail for plant verification.',
-      action: 'Upload or take a clearer leaf photo with visible plant texture.',
+      color: "#c14f3d",
+      symptoms:
+        "The image is too dark, blank, or low-detail for plant verification.",
+      action: "Upload or take a clearer leaf photo with visible plant texture.",
       isPlant: false,
       metrics: { plantScore: 0, greenRatio: 0, yellowRatio: 0, brownRatio: 0 },
     };
@@ -442,10 +549,12 @@ async function analyzeImageOnDevice(uri: string): Promise<Diagnosis> {
   );
 
   if (!manipulated.base64) {
-    throw new Error('No base64 image data returned');
+    throw new Error("No base64 image data returned");
   }
 
-  const decoded = jpeg.decode(base64ToBytes(manipulated.base64), { useTArray: true });
+  const decoded = jpeg.decode(base64ToBytes(manipulated.base64), {
+    useTArray: true,
+  });
   return analyzeRgbaPixels(decoded.data, decoded.width * decoded.height);
 }
 
@@ -460,38 +569,40 @@ async function loadImageForAnalysis(uri: string) {
 
   const objectUrl = web.URL.createObjectURL(blob);
   return new Promise<any>((resolve, reject) => {
-    const img = web.document.createElement('img');
+    const img = web.document.createElement("img");
     img.onload = () => {
       web.URL.revokeObjectURL(objectUrl);
       resolve(img);
     };
     img.onerror = () => {
       web.URL.revokeObjectURL(objectUrl);
-      reject(new Error('Image failed to load'));
+      reject(new Error("Image failed to load"));
     };
     img.src = objectUrl;
   });
 }
 
 async function analyzeImageOnWeb(uri: string): Promise<Diagnosis> {
-  if (Platform.OS !== 'web') {
+  if (Platform.OS !== "web") {
     return analyzeImageOnDevice(uri);
   }
 
   const image = await loadImageForAnalysis(uri);
   const web = globalThis as any;
-  const canvas = web.document.createElement('canvas');
+  const canvas = web.document.createElement("canvas");
   const size = 96;
   canvas.width = size;
   canvas.height = size;
-  const context = canvas.getContext('2d');
+  const context = canvas.getContext("2d");
   if (!context) {
     return {
-      title: 'Image could not be verified',
+      title: "Image could not be verified",
       confidence: 0,
-      color: '#c14f3d',
-      symptoms: 'The image loaded, but this browser did not expose pixel analysis.',
-      action: 'Try a JPG/PNG image in desktop Chrome so GrowMind can verify plant pixels.',
+      color: "#c14f3d",
+      symptoms:
+        "The image loaded, but this browser did not expose pixel analysis.",
+      action:
+        "Try a JPG/PNG image in desktop Chrome so GrowMind can verify plant pixels.",
       isPlant: false,
     };
   }
@@ -501,21 +612,25 @@ async function analyzeImageOnWeb(uri: string): Promise<Diagnosis> {
 }
 
 function shouldUseCameraPicker() {
-  return Platform.OS !== 'web';
+  return Platform.OS !== "web";
 }
 
 export default function App() {
-  const [activeTab, setActiveTab] = useState<TabKey>('Home');
-  const [selectedPlantId, setSelectedPlantId] = useState('p1');
+  const [activeTab, setActiveTab] = useState<TabKey>("Home");
+  const [selectedPlantId, setSelectedPlantId] = useState("p1");
   const [plantRecords, setPlantRecords] = useState(initialPlants);
   const [sections, setSections] = useState(initialSections);
   const [calendarItems, setCalendarItems] = useState(initialCalendar);
   const [editingId, setEditingId] = useState<string | null>(null);
-  const [plantInput, setPlantInput] = useState('New Plant');
-  const [cropInput, setCropInput] = useState<CropKey>('strawberry');
-  const [dateInput, setDateInput] = useState('2026-05-05');
-  const [harvestInput, setHarvestInput] = useState(addDays('2026-05-05', cropHarvestDays.strawberry));
-  const [calendarMonth, setCalendarMonth] = useState(new Date('2026-05-01T00:00:00'));
+  const [plantInput, setPlantInput] = useState("New Plant");
+  const [cropInput, setCropInput] = useState<CropKey>("strawberry");
+  const [dateInput, setDateInput] = useState("2026-05-05");
+  const [harvestInput, setHarvestInput] = useState(
+    addDays("2026-05-05", cropHarvestDays.strawberry),
+  );
+  const [calendarMonth, setCalendarMonth] = useState(
+    new Date("2026-05-01T00:00:00"),
+  );
   const [leafImageUri, setLeafImageUri] = useState<string | null>(null);
   const [scan, setScan] = useState<Diagnosis>(waitingDiagnosis);
   const [isScanning, setIsScanning] = useState(false);
@@ -533,27 +648,48 @@ export default function App() {
     }));
   }, [plantRecords, tick]);
 
-  const selectedPlant = plants.find((plant) => plant.id === selectedPlantId) ?? plants[0];
-  const totalWater = plants.reduce((sum, plant) => sum + plant.waterToday, 0).toFixed(1);
-  const totalEnergy = plants.reduce((sum, plant) => sum + plant.energyToday, 0).toFixed(1);
-  const avgGrowth = Math.round(plants.reduce((sum, plant) => sum + plant.growthScore, 0) / plants.length);
+  const selectedPlant =
+    plants.find((plant) => plant.id === selectedPlantId) ?? plants[0];
+  const totalWater = plants
+    .reduce((sum, plant) => sum + plant.waterToday, 0)
+    .toFixed(1);
+  const totalEnergy = plants
+    .reduce((sum, plant) => sum + plant.energyToday, 0)
+    .toFixed(1);
+  const avgGrowth = Math.round(
+    plants.reduce((sum, plant) => sum + plant.growthScore, 0) / plants.length,
+  );
   const urgentAlerts = plants.filter((plant) => {
     const target = cropTargets[plant.cropKey];
-    return !within(plant.temp, target.temp) || !within(plant.ph, target.ph) || plant.moisture < target.moisture[0];
+    return (
+      !within(plant.temp, target.temp) ||
+      !within(plant.ph, target.ph) ||
+      plant.moisture < target.moisture[0]
+    );
   });
 
-  function updateSection(sectionId: string, field: keyof FarmSection, deltaOrValue: number | boolean) {
+  function updateSection(
+    sectionId: string,
+    field: keyof FarmSection,
+    deltaOrValue: number | boolean,
+  ) {
     setSections((current) =>
       current.map((section) => {
         if (section.id !== sectionId) return section;
-        const plant = plants.find((item) => item.id === section.plantId) ?? plants[0];
-        if (typeof deltaOrValue === 'boolean') {
-          return deltaOrValue ? { ...section, ...getAutoRecipe(plant), auto: true } : { ...section, auto: false };
+        const plant =
+          plants.find((item) => item.id === section.plantId) ?? plants[0];
+        if (typeof deltaOrValue === "boolean") {
+          return deltaOrValue
+            ? { ...section, ...getAutoRecipe(plant), auto: true }
+            : { ...section, auto: false };
         }
         if (section.auto) return section;
         const currentValue = section[field];
-        if (typeof currentValue !== 'number') return section;
-        return { ...section, [field]: clamp(currentValue + deltaOrValue, 0, 100) };
+        if (typeof currentValue !== "number") return section;
+        return {
+          ...section,
+          [field]: clamp(currentValue + deltaOrValue, 0, 100),
+        };
       }),
     );
   }
@@ -566,7 +702,13 @@ export default function App() {
       setCalendarItems((items) =>
         items.map((item) =>
           item.id === editingId
-            ? { ...item, plantName: plantInput.trim(), cropKey: cropInput, plantedDate: dateInput.trim(), harvestDate: harvestInput.trim() }
+            ? {
+                ...item,
+                plantName: plantInput.trim(),
+                cropKey: cropInput,
+                plantedDate: dateInput.trim(),
+                harvestDate: harvestInput.trim(),
+              }
             : item,
         ),
       );
@@ -626,10 +768,10 @@ export default function App() {
       setSelectedPlantId(plantId);
     }
 
-    setPlantInput('New Plant');
-    setCropInput('strawberry');
-    setDateInput('2026-05-05');
-    setHarvestInput(addDays('2026-05-05', cropHarvestDays.strawberry));
+    setPlantInput("New Plant");
+    setCropInput("strawberry");
+    setDateInput("2026-05-05");
+    setHarvestInput(addDays("2026-05-05", cropHarvestDays.strawberry));
   }
 
   function editCalendarItem(item: CalendarItem) {
@@ -652,14 +794,22 @@ export default function App() {
 
   function deleteCalendarItem(id: string) {
     const item = calendarItems.find((calendarItem) => calendarItem.id === id);
-    setCalendarItems((items) => items.filter((calendarItem) => calendarItem.id !== id));
+    setCalendarItems((items) =>
+      items.filter((calendarItem) => calendarItem.id !== id),
+    );
 
     if (!item) return;
-    setPlantRecords((records) => records.filter((plant) => plant.id !== item.plantId));
-    setSections((records) => records.filter((section) => section.plantId !== item.plantId));
+    setPlantRecords((records) =>
+      records.filter((plant) => plant.id !== item.plantId),
+    );
+    setSections((records) =>
+      records.filter((section) => section.plantId !== item.plantId),
+    );
     if (selectedPlantId === item.plantId) {
-      const fallbackPlant = plantRecords.find((plant) => plant.id !== item.plantId);
-      setSelectedPlantId(fallbackPlant?.id ?? 'p1');
+      const fallbackPlant = plantRecords.find(
+        (plant) => plant.id !== item.plantId,
+      );
+      setSelectedPlantId(fallbackPlant?.id ?? "p1");
     }
   }
 
@@ -674,11 +824,13 @@ export default function App() {
       setScan(await analyzeImageOnWeb(uri));
     } catch {
       setScan({
-        title: 'Image could not be verified',
+        title: "Image could not be verified",
         confidence: 0,
-        color: '#c14f3d',
-        symptoms: 'GrowMind could not read the uploaded image pixels, so it will not guess.',
-        action: 'Try a JPG or PNG image, avoid screenshots from protected apps, and upload a clear leaf photo.',
+        color: "#c14f3d",
+        symptoms:
+          "GrowMind could not read the uploaded image pixels, so it will not guess.",
+        action:
+          "Try a JPG or PNG image, avoid screenshots from protected apps, and upload a clear leaf photo.",
         isPlant: false,
       });
     } finally {
@@ -691,17 +843,18 @@ export default function App() {
       allowsEditing: true,
       aspect: [4, 5],
       quality: 0.85,
-      mediaTypes: ['images'],
+      mediaTypes: ["images"],
     });
 
-  if (!result.canceled) {
+    if (!result.canceled) {
       const uri = result.assets[0].uri;
       setLeafImageUri(uri);
       setScan({
         ...waitingDiagnosis,
-        title: 'Image ready to scan',
-        symptoms: 'The selected image is loaded. Press Scan to verify plant coverage and diagnose it.',
-        action: 'Use Scan after selecting a leaf photo.',
+        title: "Image ready to scan",
+        symptoms:
+          "The selected image is loaded. Press Scan to verify plant coverage and diagnose it.",
+        action: "Use Scan after selecting a leaf photo.",
       });
       await runPlantScan(uri);
     }
@@ -716,11 +869,11 @@ export default function App() {
     const permission = await ImagePicker.requestCameraPermissionsAsync();
     if (!permission.granted) {
       setScan({
-        title: 'Camera permission needed',
+        title: "Camera permission needed",
         confidence: 0,
-        color: '#c14f3d',
-        symptoms: 'GrowMind cannot open the camera without permission.',
-        action: 'Allow camera access, or use Upload image instead.',
+        color: "#c14f3d",
+        symptoms: "GrowMind cannot open the camera without permission.",
+        action: "Allow camera access, or use Upload image instead.",
         isPlant: false,
       });
       return;
@@ -730,7 +883,7 @@ export default function App() {
       allowsEditing: true,
       aspect: [4, 5],
       quality: 0.85,
-      mediaTypes: ['images'],
+      mediaTypes: ["images"],
     });
 
     if (!result.canceled) {
@@ -738,9 +891,10 @@ export default function App() {
       setLeafImageUri(uri);
       setScan({
         ...waitingDiagnosis,
-        title: 'Photo ready to scan',
-        symptoms: 'The camera photo is loaded. Press Scan to verify plant coverage and diagnose it.',
-        action: 'Use Scan after taking a close-up leaf photo.',
+        title: "Photo ready to scan",
+        symptoms:
+          "The camera photo is loaded. Press Scan to verify plant coverage and diagnose it.",
+        action: "Use Scan after taking a close-up leaf photo.",
       });
       await runPlantScan(uri);
     }
@@ -760,12 +914,19 @@ export default function App() {
         </View>
       </View>
 
-      <ScrollView style={styles.content} contentContainerStyle={styles.contentInner}>
-        {activeTab === 'My Farm' && (
-          <MyFarmPage plants={plants} sections={sections} onUpdateSection={updateSection} />
+      <ScrollView
+        style={styles.content}
+        contentContainerStyle={styles.contentInner}
+      >
+        {activeTab === "My Farm" && (
+          <MyFarmPage
+            plants={plants}
+            sections={sections}
+            onUpdateSection={updateSection}
+          />
         )}
 
-        {activeTab === 'My Plants' && (
+        {activeTab === "My Plants" && (
           <MyPlantsPage
             plants={plants}
             selectedPlant={selectedPlant}
@@ -774,7 +935,7 @@ export default function App() {
           />
         )}
 
-        {activeTab === 'Home' && (
+        {activeTab === "Home" && (
           <HomePage
             plants={plants}
             avgGrowth={avgGrowth}
@@ -786,7 +947,7 @@ export default function App() {
           />
         )}
 
-        {activeTab === 'Calendar' && (
+        {activeTab === "Calendar" && (
           <CalendarPage
             items={calendarItems}
             editingId={editingId}
@@ -806,7 +967,7 @@ export default function App() {
           />
         )}
 
-        {activeTab === 'Doctor' && (
+        {activeTab === "Doctor" && (
           <DoctorPage
             imageUri={leafImageUri}
             scan={scan}
@@ -825,7 +986,14 @@ export default function App() {
             onPress={() => setActiveTab(tab)}
             style={[styles.tabItem, activeTab === tab && styles.tabItemActive]}
           >
-            <Text style={[styles.tabText, activeTab === tab && styles.tabTextActive]}>{tab}</Text>
+            <Text
+              style={[
+                styles.tabText,
+                activeTab === tab && styles.tabTextActive,
+              ]}
+            >
+              {tab}
+            </Text>
           </Pressable>
         ))}
       </View>
@@ -850,8 +1018,16 @@ function HomePage({
   nextHarvest?: CalendarItem;
   onRefresh: () => void;
 }) {
-  const bestPlant = plants.reduce((best, plant) => (plant.growthScore > best.growthScore ? plant : best), plants[0]);
-  const farmMood = avgGrowth >= 86 ? 'Thriving' : avgGrowth >= 75 ? 'Needs light tuning' : 'Needs attention';
+  const bestPlant = plants.reduce(
+    (best, plant) => (plant.growthScore > best.growthScore ? plant : best),
+    plants[0],
+  );
+  const farmMood =
+    avgGrowth >= 86
+      ? "Thriving"
+      : avgGrowth >= 75
+        ? "Needs light tuning"
+        : "Needs attention";
 
   return (
     <>
@@ -873,8 +1049,8 @@ function HomePage({
           <View style={styles.canopyTray} />
         </View>
         <Text style={styles.homeHeroText}>
-          {bestPlant.name} is your strongest tray today. GrowMind is balancing water, energy, and
-          harvest timing across {plants.length} sections.
+          {bestPlant.name} is your strongest tray today. GrowMind is balancing
+          water, energy, and harvest timing across {plants.length} sections.
         </Text>
         <Pressable onPress={onRefresh} style={styles.homeRefreshButton}>
           <Text style={styles.primaryButtonText}>Refresh live sensors</Text>
@@ -882,19 +1058,32 @@ function HomePage({
       </View>
 
       <View style={styles.homeMetricRow}>
-        <FreshMetric label="Water" value={`${totalWater} L`} note="used today" />
+        <FreshMetric
+          label="Water"
+          value={`${totalWater} L`}
+          note="used today"
+        />
         <FreshMetric label="Energy" value={`${totalEnergy}`} note="kWh today" />
-        <FreshMetric label="Harvest" value={nextHarvest?.harvestDate.slice(5) ?? '--'} note="next date" />
+        <FreshMetric
+          label="Harvest"
+          value={nextHarvest?.harvestDate.slice(5) ?? "--"}
+          note="next date"
+        />
       </View>
 
-      <SectionTitle title="Morning Brief" action={`${urgentAlerts.length} alerts`} />
+      <SectionTitle
+        title="Morning Brief"
+        action={`${urgentAlerts.length} alerts`}
+      />
       <View style={styles.briefCard}>
         <Text style={styles.cardTitle}>
-          {urgentAlerts.length === 0 ? 'Everything is stable' : `${urgentAlerts.length} section needs action`}
+          {urgentAlerts.length === 0
+            ? "Everything is stable"
+            : `${urgentAlerts.length} section needs action`}
         </Text>
         <Text style={styles.bodyText}>
           {urgentAlerts.length === 0
-            ? 'All active plants are inside their crop target range.'
+            ? "All active plants are inside their crop target range."
             : `${urgentAlerts[0].section} is drifting outside its crop profile. Check pH, moisture, or temperature first.`}
         </Text>
       </View>
@@ -912,7 +1101,11 @@ function MyFarmPage({
 }: {
   plants: Plant[];
   sections: FarmSection[];
-  onUpdateSection: (sectionId: string, field: keyof FarmSection, deltaOrValue: number | boolean) => void;
+  onUpdateSection: (
+    sectionId: string,
+    field: keyof FarmSection,
+    deltaOrValue: number | boolean,
+  ) => void;
 }) {
   return (
     <>
@@ -921,32 +1114,70 @@ function MyFarmPage({
         text="Control each rack section using plant-specific profiles for LEDs, fans, hydroponic pumps, and nutrient dosing."
       />
       {sections.map((section) => {
-        const plant = plants.find((item) => item.id === section.plantId) ?? plants[0];
+        const plant =
+          plants.find((item) => item.id === section.plantId) ?? plants[0];
         return (
           <View key={section.id} style={styles.sectionCard}>
             <View style={styles.cardHeader}>
               <View>
                 <Text style={styles.cardTitle}>{section.name}</Text>
-                <Text style={styles.bodyText}>{plant.name} - {plant.variety}</Text>
+                <Text style={styles.bodyText}>
+                  {plant.name} - {plant.variety}
+                </Text>
               </View>
               <Pressable
-                onPress={() => onUpdateSection(section.id, 'auto', !section.auto)}
-                style={[styles.autoBadge, section.auto && styles.autoBadgeActive]}
+                onPress={() =>
+                  onUpdateSection(section.id, "auto", !section.auto)
+                }
+                style={[
+                  styles.autoBadge,
+                  section.auto && styles.autoBadgeActive,
+                ]}
               >
-                <Text style={[styles.autoText, section.auto && styles.autoTextActive]}>
-                  {section.auto ? 'AUTO' : 'MANUAL'}
+                <Text
+                  style={[
+                    styles.autoText,
+                    section.auto && styles.autoTextActive,
+                  ]}
+                >
+                  {section.auto ? "AUTO" : "MANUAL"}
                 </Text>
               </Pressable>
             </View>
             {section.auto && (
               <Text style={styles.autoHint}>
-                Auto is active. GrowMind is controlling this section from the {plant.variety} profile.
+                Auto is active. GrowMind is controlling this section from the{" "}
+                {plant.variety} profile.
               </Text>
             )}
-            <ControlAdjuster disabled={section.auto} label="LED spectrum" value={section.led} onMinus={() => onUpdateSection(section.id, 'led', -5)} onPlus={() => onUpdateSection(section.id, 'led', 5)} />
-            <ControlAdjuster disabled={section.auto} label="Cooling fan" value={section.fan} onMinus={() => onUpdateSection(section.id, 'fan', -5)} onPlus={() => onUpdateSection(section.id, 'fan', 5)} />
-            <ControlAdjuster disabled={section.auto} label="Hydro pump" value={section.pump} onMinus={() => onUpdateSection(section.id, 'pump', -5)} onPlus={() => onUpdateSection(section.id, 'pump', 5)} />
-            <ControlAdjuster disabled={section.auto} label="Nutrient mix" value={section.nutrient} onMinus={() => onUpdateSection(section.id, 'nutrient', -5)} onPlus={() => onUpdateSection(section.id, 'nutrient', 5)} />
+            <ControlAdjuster
+              disabled={section.auto}
+              label="LED spectrum"
+              value={section.led}
+              onMinus={() => onUpdateSection(section.id, "led", -5)}
+              onPlus={() => onUpdateSection(section.id, "led", 5)}
+            />
+            <ControlAdjuster
+              disabled={section.auto}
+              label="Cooling fan"
+              value={section.fan}
+              onMinus={() => onUpdateSection(section.id, "fan", -5)}
+              onPlus={() => onUpdateSection(section.id, "fan", 5)}
+            />
+            <ControlAdjuster
+              disabled={section.auto}
+              label="Hydro pump"
+              value={section.pump}
+              onMinus={() => onUpdateSection(section.id, "pump", -5)}
+              onPlus={() => onUpdateSection(section.id, "pump", 5)}
+            />
+            <ControlAdjuster
+              disabled={section.auto}
+              label="Nutrient mix"
+              value={section.nutrient}
+              onMinus={() => onUpdateSection(section.id, "nutrient", -5)}
+              onPlus={() => onUpdateSection(section.id, "nutrient", 5)}
+            />
           </View>
         );
       })}
@@ -967,7 +1198,11 @@ function MyPlantsPage({
 }) {
   const target = cropTargets[selectedPlant.cropKey];
   const age = daysBetween(selectedPlant.plantedDate);
-  const progress = clamp(Math.round((age / selectedPlant.harvestDay) * 100), 0, 100);
+  const progress = clamp(
+    Math.round((age / selectedPlant.harvestDay) * 100),
+    0,
+    100,
+  );
 
   return (
     <>
@@ -975,17 +1210,34 @@ function MyPlantsPage({
         title="My Plants"
         text="Inspect real-time sensor readings, growth metrics, resource consumption, and historical trends for every plant."
       />
-      <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={styles.plantRail}>
+      <ScrollView
+        horizontal
+        showsHorizontalScrollIndicator={false}
+        contentContainerStyle={styles.plantRail}
+      >
         {plants.map((plant) => (
           <Pressable
             key={plant.id}
             onPress={() => setSelectedPlantId(plant.id)}
-            style={[styles.plantPill, selectedPlant.id === plant.id && styles.plantPillActive]}
+            style={[
+              styles.plantPill,
+              selectedPlant.id === plant.id && styles.plantPillActive,
+            ]}
           >
-            <Text style={[styles.plantPillText, selectedPlant.id === plant.id && styles.plantPillTextActive]}>
+            <Text
+              style={[
+                styles.plantPillText,
+                selectedPlant.id === plant.id && styles.plantPillTextActive,
+              ]}
+            >
               {plant.name}
             </Text>
-            <Text style={[styles.plantPillMeta, selectedPlant.id === plant.id && styles.plantPillTextActive]}>
+            <Text
+              style={[
+                styles.plantPillMeta,
+                selectedPlant.id === plant.id && styles.plantPillTextActive,
+              ]}
+            >
               {plant.section}
             </Text>
           </Pressable>
@@ -996,21 +1248,45 @@ function MyPlantsPage({
         <View style={styles.cardHeader}>
           <View>
             <Text style={styles.cardTitle}>{selectedPlant.name}</Text>
-            <Text style={styles.bodyText}>{selectedPlant.variety} - planted {selectedPlant.plantedDate}</Text>
+            <Text style={styles.bodyText}>
+              {selectedPlant.variety} - planted {selectedPlant.plantedDate}
+            </Text>
           </View>
           <Pressable onPress={onRefresh} style={styles.smallButton}>
             <Text style={styles.smallButtonText}>Refresh</Text>
           </Pressable>
         </View>
         <ProgressBar value={progress} color="#2d7d4a" />
-        <Text style={styles.metricText}>{progress}% toward expected harvest window</Text>
+        <Text style={styles.metricText}>
+          {progress}% toward expected harvest window
+        </Text>
       </View>
 
       <View style={styles.grid}>
-        <SensorCard label="Temperature" value={`${selectedPlant.temp} C`} target={`${target.temp[0]}-${target.temp[1]} C`} status={within(selectedPlant.temp, target.temp)} />
-        <SensorCard label="Humidity" value={`${selectedPlant.humidity}%`} target={`${target.humidity[0]}-${target.humidity[1]}%`} status={within(selectedPlant.humidity, target.humidity)} />
-        <SensorCard label="Moisture" value={`${selectedPlant.moisture}%`} target={`${target.moisture[0]}-${target.moisture[1]}%`} status={within(selectedPlant.moisture, target.moisture)} />
-        <SensorCard label="Water pH" value={`${selectedPlant.ph}`} target={`${target.ph[0]}-${target.ph[1]}`} status={within(selectedPlant.ph, target.ph)} />
+        <SensorCard
+          label="Temperature"
+          value={`${selectedPlant.temp} C`}
+          target={`${target.temp[0]}-${target.temp[1]} C`}
+          status={within(selectedPlant.temp, target.temp)}
+        />
+        <SensorCard
+          label="Humidity"
+          value={`${selectedPlant.humidity}%`}
+          target={`${target.humidity[0]}-${target.humidity[1]}%`}
+          status={within(selectedPlant.humidity, target.humidity)}
+        />
+        <SensorCard
+          label="Moisture"
+          value={`${selectedPlant.moisture}%`}
+          target={`${target.moisture[0]}-${target.moisture[1]}%`}
+          status={within(selectedPlant.moisture, target.moisture)}
+        />
+        <SensorCard
+          label="Water pH"
+          value={`${selectedPlant.ph}`}
+          target={`${target.ph[0]}-${target.ph[1]}`}
+          status={within(selectedPlant.ph, target.ph)}
+        />
       </View>
 
       <SectionTitle title="Resources" action="Daily usage" />
@@ -1085,23 +1361,38 @@ function CalendarPage({
           </Pressable>
         </View>
         <View style={styles.weekRow}>
-          {['S', 'M', 'T', 'W', 'T', 'F', 'S'].map((day, index) => (
-            <Text key={`${day}-${index}`} style={styles.weekText}>{day}</Text>
+          {["S", "M", "T", "W", "T", "F", "S"].map((day, index) => (
+            <Text key={`${day}-${index}`} style={styles.weekText}>
+              {day}
+            </Text>
           ))}
         </View>
         <View style={styles.calendarGrid}>
           {days.map((day, index) => {
             const iso = day ? formatDateLocal(day) : undefined;
-            const events = iso ? items.filter((item) => item.plantedDate === iso || item.harvestDate === iso) : [];
+            const events = iso
+              ? items.filter(
+                  (item) =>
+                    item.plantedDate === iso || item.harvestDate === iso,
+                )
+              : [];
             return (
               <Pressable
-                key={`${iso ?? 'blank'}-${index}`}
+                key={`${iso ?? "blank"}-${index}`}
                 disabled={!iso}
                 onPress={() => iso && setDateInput(iso)}
-                style={[styles.dayCell, iso === dateInput && styles.dayCellSelected]}
+                style={[
+                  styles.dayCell,
+                  iso === dateInput && styles.dayCellSelected,
+                ]}
               >
-                <Text style={[styles.dayText, iso === dateInput && styles.dayTextSelected]}>
-                  {day ? day.getDate() : ''}
+                <Text
+                  style={[
+                    styles.dayText,
+                    iso === dateInput && styles.dayTextSelected,
+                  ]}
+                >
+                  {day ? day.getDate() : ""}
                 </Text>
                 {events.length > 0 && <View style={styles.eventDot} />}
               </Pressable>
@@ -1111,36 +1402,69 @@ function CalendarPage({
       </View>
 
       <View style={styles.formCard}>
-        <Text style={styles.cardTitle}>{editingId ? 'Modify Plant Date' : 'Add Plant Date'}</Text>
-        <TextInput style={styles.input} value={plantInput} onChangeText={setPlantInput} placeholder="Plant name" />
+        <Text style={styles.cardTitle}>
+          {editingId ? "Modify Plant Date" : "Add Plant Date"}
+        </Text>
+        <TextInput
+          style={styles.input}
+          value={plantInput}
+          onChangeText={setPlantInput}
+          placeholder="Plant name"
+        />
         <View style={styles.cropChoiceRow}>
           {(Object.keys(cropLabels) as CropKey[]).map((cropKey) => (
             <Pressable
               key={cropKey}
               onPress={() => setCropInput(cropKey)}
-              style={[styles.cropChoice, cropInput === cropKey && styles.cropChoiceActive]}
+              style={[
+                styles.cropChoice,
+                cropInput === cropKey && styles.cropChoiceActive,
+              ]}
             >
-              <Text style={[styles.cropChoiceText, cropInput === cropKey && styles.cropChoiceTextActive]}>
+              <Text
+                style={[
+                  styles.cropChoiceText,
+                  cropInput === cropKey && styles.cropChoiceTextActive,
+                ]}
+              >
                 {cropLabels[cropKey]}
               </Text>
             </Pressable>
           ))}
         </View>
-        <TextInput style={styles.input} value={dateInput} onChangeText={setDateInput} placeholder="Planted date YYYY-MM-DD" />
-        <TextInput style={styles.input} value={harvestInput} onChangeText={setHarvestInput} placeholder="Harvest date YYYY-MM-DD" />
+        <TextInput
+          style={styles.input}
+          value={dateInput}
+          onChangeText={setDateInput}
+          placeholder="Planted date YYYY-MM-DD"
+        />
+        <TextInput
+          style={styles.input}
+          value={harvestInput}
+          onChangeText={setHarvestInput}
+          placeholder="Harvest date YYYY-MM-DD"
+        />
         <View style={styles.suggestionBox}>
           <Text style={styles.recommendationText}>
-            {cropLabels[cropInput]} usually needs {cropHarvestDays[cropInput]} days. Suggested harvest:
-            {' '}{addDays(dateInput, cropHarvestDays[cropInput])}
+            {cropLabels[cropInput]} usually needs {cropHarvestDays[cropInput]}{" "}
+            days. Suggested harvest:{" "}
+            {addDays(dateInput, cropHarvestDays[cropInput])}
           </Text>
-          <Text style={styles.metricText}>Next planting window: {suggestedNextPlanting}</Text>
+          <Text style={styles.metricText}>
+            Next planting window: {suggestedNextPlanting}
+          </Text>
         </View>
         <Pressable onPress={onSave} style={styles.primaryButton}>
-          <Text style={styles.primaryButtonText}>{editingId ? 'Save changes' : 'Add schedule'}</Text>
+          <Text style={styles.primaryButtonText}>
+            {editingId ? "Save changes" : "Add schedule"}
+          </Text>
         </Pressable>
       </View>
 
-      <SectionTitle title="Planting Schedule" action={`${items.length} records`} />
+      <SectionTitle
+        title="Planting Schedule"
+        action={`${items.length} records`}
+      />
       {items.map((item) => (
         <View key={item.id} style={styles.calendarCard}>
           <View style={{ flex: 1 }}>
@@ -1148,14 +1472,18 @@ function CalendarPage({
             <Text style={styles.sensorLabel}>{cropLabels[item.cropKey]}</Text>
             <Text style={styles.bodyText}>Planted {item.plantedDate}</Text>
             <Text style={styles.recommendationText}>
-              Harvest {item.harvestDate} - {daysBetween('2026-05-05', item.harvestDate)} days left
+              Harvest {item.harvestDate} -{" "}
+              {daysBetween("2026-05-05", item.harvestDate)} days left
             </Text>
           </View>
           <View style={styles.calendarActions}>
             <Pressable onPress={() => onEdit(item)} style={styles.smallButton}>
               <Text style={styles.smallButtonText}>Edit</Text>
             </Pressable>
-            <Pressable onPress={() => onDelete(item.id)} style={[styles.smallButton, styles.deleteButton]}>
+            <Pressable
+              onPress={() => onDelete(item.id)}
+              style={[styles.smallButton, styles.deleteButton]}
+            >
               <Text style={styles.deleteButtonText}>Delete</Text>
             </Pressable>
           </View>
@@ -1189,18 +1517,30 @@ function DoctorPage({
       <View style={styles.scanner}>
         <View style={styles.cameraFrame}>
           {imageUri ? (
-            <Image source={{ uri: imageUri }} style={styles.uploadedImage} resizeMode="cover" />
+            <Image
+              source={{ uri: imageUri }}
+              style={styles.uploadedImage}
+              resizeMode="cover"
+            />
           ) : (
             <View style={styles.scanLeaf} />
           )}
           <View style={styles.scanLine} />
-          <Text style={styles.cameraText}>{imageUri ? 'Selected plant image' : 'No image selected'}</Text>
+          <Text style={styles.cameraText}>
+            {imageUri ? "Selected plant image" : "No image selected"}
+          </Text>
         </View>
         <View style={styles.scanActions}>
-          <Pressable onPress={onTakePhoto} style={[styles.scanButton, styles.cameraButton]}>
+          <Pressable
+            onPress={onTakePhoto}
+            style={[styles.scanButton, styles.cameraButton]}
+          >
             <Text style={styles.scanButtonText}>Take photo</Text>
           </Pressable>
-          <Pressable onPress={onPickImage} style={[styles.scanButton, styles.uploadButton]}>
+          <Pressable
+            onPress={onPickImage}
+            style={[styles.scanButton, styles.uploadButton]}
+          >
             <Text style={styles.scanButtonText}>Upload</Text>
           </Pressable>
           <Pressable onPress={onRunScan} style={styles.scanButton}>
@@ -1209,16 +1549,25 @@ function DoctorPage({
         </View>
       </View>
 
-      <SectionTitle title="Diagnosis" action={isScanning ? 'Scanning image' : `${scan.confidence}% confidence`} />
+      <SectionTitle
+        title="Diagnosis"
+        action={
+          isScanning ? "Scanning image" : `${scan.confidence}% confidence`
+        }
+      />
       <View style={styles.diagnosisCard}>
-        <View style={[styles.diagnosisStrip, { backgroundColor: scan.color }]} />
+        <View
+          style={[styles.diagnosisStrip, { backgroundColor: scan.color }]}
+        />
         <View style={styles.diagnosisBody}>
           <Text style={styles.diagnosisTitle}>{scan.title}</Text>
           <Text style={styles.bodyText}>{scan.symptoms}</Text>
           <Text style={styles.recommendationText}>{scan.action}</Text>
           {scan.metrics && (
             <Text style={styles.metricText}>
-              Plant score {scan.metrics.plantScore}% | Green {scan.metrics.greenRatio}% | Yellow {scan.metrics.yellowRatio}% | Brown {scan.metrics.brownRatio}%
+              Plant score {scan.metrics.plantScore}% | Green{" "}
+              {scan.metrics.greenRatio}% | Yellow {scan.metrics.yellowRatio}% |
+              Brown {scan.metrics.brownRatio}%
             </Text>
           )}
         </View>
@@ -1254,7 +1603,15 @@ function StatCard({ label, value }: { label: string; value: string }) {
   );
 }
 
-function FreshMetric({ label, value, note }: { label: string; value: string; note: string }) {
+function FreshMetric({
+  label,
+  value,
+  note,
+}: {
+  label: string;
+  value: string;
+  note: string;
+}) {
   return (
     <View style={styles.freshMetric}>
       <Text style={styles.freshMetricLabel}>{label}</Text>
@@ -1264,15 +1621,29 @@ function FreshMetric({ label, value, note }: { label: string; value: string; not
   );
 }
 
-function SensorCard({ label, value, target, status }: { label: string; value: string; target: string; status: boolean }) {
+function SensorCard({
+  label,
+  value,
+  target,
+  status,
+}: {
+  label: string;
+  value: string;
+  target: string;
+  status: boolean;
+}) {
   return (
     <View style={styles.sensorCard}>
-      <View style={[styles.statusDot, status ? styles.statusOk : styles.statusWarn]} />
+      <View
+        style={[styles.statusDot, status ? styles.statusOk : styles.statusWarn]}
+      />
       <Text style={styles.sensorLabel}>{label}</Text>
       <Text style={styles.sensorValue}>{value}</Text>
       <Text style={styles.sensorTarget}>Target {target}</Text>
-      <Text style={[styles.sensorStatus, status ? styles.okText : styles.warnText]}>
-        {status ? 'Optimal' : 'Needs action'}
+      <Text
+        style={[styles.sensorStatus, status ? styles.okText : styles.warnText]}
+      >
+        {status ? "Optimal" : "Needs action"}
       </Text>
     </View>
   );
@@ -1306,16 +1677,26 @@ function ControlAdjuster({
     <View style={[styles.controlCard, disabled && styles.controlCardDisabled]}>
       <View style={styles.controlHeader}>
         <Text style={styles.controlLabel}>{label}</Text>
-        <Text style={[styles.controlState, disabled && styles.controlStateDisabled]}>
-          {disabled ? 'AUTO' : `${value}%`}
+        <Text
+          style={[styles.controlState, disabled && styles.controlStateDisabled]}
+        >
+          {disabled ? "AUTO" : `${value}%`}
         </Text>
       </View>
-      <ProgressBar value={value} color={disabled ? '#8aa096' : '#2d7d4a'} />
+      <ProgressBar value={value} color={disabled ? "#8aa096" : "#2d7d4a"} />
       <View style={styles.adjustRow}>
-        <Pressable disabled={disabled} onPress={onMinus} style={[styles.adjustButton, disabled && styles.adjustButtonDisabled]}>
+        <Pressable
+          disabled={disabled}
+          onPress={onMinus}
+          style={[styles.adjustButton, disabled && styles.adjustButtonDisabled]}
+        >
           <Text style={styles.adjustText}>-</Text>
         </Pressable>
-        <Pressable disabled={disabled} onPress={onPlus} style={[styles.adjustButton, disabled && styles.adjustButtonDisabled]}>
+        <Pressable
+          disabled={disabled}
+          onPress={onPlus}
+          style={[styles.adjustButton, disabled && styles.adjustButtonDisabled]}
+        >
           <Text style={styles.adjustText}>+</Text>
         </Pressable>
       </View>
@@ -1326,7 +1707,12 @@ function ControlAdjuster({
 function ProgressBar({ value, color }: { value: number; color: string }) {
   return (
     <View style={styles.progressTrack}>
-      <View style={[styles.progressFill, { width: `${clamp(value, 0, 100)}%`, backgroundColor: color }]} />
+      <View
+        style={[
+          styles.progressFill,
+          { width: `${clamp(value, 0, 100)}%`, backgroundColor: color },
+        ]}
+      />
     </View>
   );
 }
@@ -1351,34 +1737,34 @@ function LineChart({ values }: { values: number[] }) {
 const styles = StyleSheet.create({
   app: {
     flex: 1,
-    backgroundColor: '#edf2ec',
+    backgroundColor: "#edf2ec",
   },
   header: {
     paddingHorizontal: 18,
     paddingTop: 14,
     paddingBottom: 10,
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'space-between',
-    width: '100%',
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "space-between",
+    width: "100%",
     maxWidth: 760,
-    alignSelf: 'center',
+    alignSelf: "center",
   },
   appName: {
     fontSize: 30,
-    fontWeight: '900',
-    color: '#17251d',
+    fontWeight: "900",
+    color: "#17251d",
   },
   subtitle: {
     fontSize: 13,
-    color: '#65716a',
+    color: "#65716a",
     marginTop: 2,
   },
   liveBadge: {
-    flexDirection: 'row',
-    alignItems: 'center',
+    flexDirection: "row",
+    alignItems: "center",
     gap: 7,
-    backgroundColor: '#ffffff',
+    backgroundColor: "#ffffff",
     borderRadius: 8,
     paddingHorizontal: 10,
     paddingVertical: 8,
@@ -1387,12 +1773,12 @@ const styles = StyleSheet.create({
     width: 8,
     height: 8,
     borderRadius: 4,
-    backgroundColor: '#2d7d4a',
+    backgroundColor: "#2d7d4a",
   },
   liveText: {
     fontSize: 11,
-    fontWeight: '900',
-    color: '#234030',
+    fontWeight: "900",
+    color: "#234030",
   },
   content: {
     flex: 1,
@@ -1400,52 +1786,52 @@ const styles = StyleSheet.create({
   contentInner: {
     padding: 18,
     paddingBottom: 110,
-    width: '100%',
+    width: "100%",
     maxWidth: 760,
-    alignSelf: 'center',
+    alignSelf: "center",
   },
   pageIntro: {
-    backgroundColor: '#ffffff',
+    backgroundColor: "#ffffff",
     borderRadius: 8,
     borderWidth: 1,
-    borderColor: '#dce5dc',
+    borderColor: "#dce5dc",
     padding: 16,
     marginBottom: 12,
   },
   pageTitle: {
     fontSize: 28,
-    fontWeight: '900',
-    color: '#17251d',
+    fontWeight: "900",
+    color: "#17251d",
     marginBottom: 6,
   },
   hero: {
-    backgroundColor: '#ffffff',
+    backgroundColor: "#ffffff",
     borderRadius: 8,
     padding: 18,
     borderWidth: 1,
-    borderColor: '#dce5dc',
+    borderColor: "#dce5dc",
     gap: 12,
   },
   homeHero: {
-    backgroundColor: '#dff1e7',
+    backgroundColor: "#dff1e7",
     borderRadius: 8,
     padding: 18,
     borderWidth: 1,
-    borderColor: '#b8d9c5',
+    borderColor: "#b8d9c5",
     gap: 14,
   },
   homeHeroTop: {
-    flexDirection: 'row',
-    alignItems: 'flex-start',
-    justifyContent: 'space-between',
+    flexDirection: "row",
+    alignItems: "flex-start",
+    justifyContent: "space-between",
     gap: 12,
   },
   homeMood: {
-    color: '#143523',
+    color: "#143523",
     flex: 1,
     flexShrink: 1,
     fontSize: 28,
-    fontWeight: '900',
+    fontWeight: "900",
     lineHeight: 33,
   },
   scoreBubble: {
@@ -1453,190 +1839,190 @@ const styles = StyleSheet.create({
     width: 82,
     height: 82,
     borderRadius: 41,
-    backgroundColor: '#ffffff',
-    alignItems: 'center',
-    justifyContent: 'center',
+    backgroundColor: "#ffffff",
+    alignItems: "center",
+    justifyContent: "center",
     borderWidth: 1,
-    borderColor: '#b8d9c5',
+    borderColor: "#b8d9c5",
   },
   scoreBubbleValue: {
-    color: '#214b35',
+    color: "#214b35",
     fontSize: 30,
-    fontWeight: '900',
+    fontWeight: "900",
   },
   scoreBubbleLabel: {
-    color: '#5d7568',
+    color: "#5d7568",
     fontSize: 11,
-    fontWeight: '900',
+    fontWeight: "900",
   },
   canopyScene: {
     height: 112,
-    backgroundColor: '#f8fff9',
+    backgroundColor: "#f8fff9",
     borderRadius: 8,
-    alignItems: 'center',
-    justifyContent: 'flex-end',
-    overflow: 'hidden',
+    alignItems: "center",
+    justifyContent: "flex-end",
+    overflow: "hidden",
   },
   canopyStem: {
     width: 9,
     height: 68,
     borderRadius: 5,
-    backgroundColor: '#3c7c4f',
+    backgroundColor: "#3c7c4f",
   },
   canopyLeaf: {
-    position: 'absolute',
+    position: "absolute",
     width: 76,
     height: 34,
     borderRadius: 12,
-    backgroundColor: '#6ab879',
+    backgroundColor: "#6ab879",
     top: 34,
   },
   canopyLeafLeft: {
-    left: '35%',
-    transform: [{ rotate: '-24deg' }],
+    left: "35%",
+    transform: [{ rotate: "-24deg" }],
   },
   canopyLeafRight: {
-    right: '35%',
+    right: "35%",
     top: 22,
-    transform: [{ rotate: '24deg' }],
+    transform: [{ rotate: "24deg" }],
   },
   canopyTray: {
-    width: '62%',
+    width: "62%",
     height: 18,
     borderRadius: 6,
-    backgroundColor: '#2f3b34',
+    backgroundColor: "#2f3b34",
   },
   homeHeroText: {
-    color: '#315541',
+    color: "#315541",
     fontSize: 14,
     lineHeight: 21,
-    fontWeight: '700',
+    fontWeight: "700",
   },
   homeRefreshButton: {
-    backgroundColor: '#214b35',
+    backgroundColor: "#214b35",
     borderRadius: 8,
     paddingVertical: 14,
-    alignItems: 'center',
+    alignItems: "center",
   },
   homeMetricRow: {
-    flexDirection: 'row',
+    flexDirection: "row",
     gap: 10,
     marginTop: 12,
   },
   freshMetric: {
     flex: 1,
-    backgroundColor: '#ffffff',
+    backgroundColor: "#ffffff",
     borderRadius: 8,
     borderWidth: 1,
-    borderColor: '#dce5dc',
+    borderColor: "#dce5dc",
     padding: 13,
     minHeight: 98,
   },
   freshMetricLabel: {
-    color: '#5f6e66',
+    color: "#5f6e66",
     fontSize: 12,
-    fontWeight: '900',
+    fontWeight: "900",
   },
   freshMetricValue: {
-    color: '#17251d',
+    color: "#17251d",
     fontSize: 21,
-    fontWeight: '900',
+    fontWeight: "900",
     marginTop: 8,
   },
   freshMetricNote: {
-    color: '#6c7b72',
+    color: "#6c7b72",
     fontSize: 11,
-    fontWeight: '700',
+    fontWeight: "700",
     marginTop: 4,
   },
   briefCard: {
-    backgroundColor: '#ffffff',
+    backgroundColor: "#ffffff",
     borderRadius: 8,
     borderWidth: 1,
-    borderColor: '#dce5dc',
+    borderColor: "#dce5dc",
     padding: 16,
     gap: 8,
   },
   heroLabel: {
-    color: '#66736b',
+    color: "#66736b",
     fontSize: 13,
-    fontWeight: '800',
+    fontWeight: "800",
   },
   heroScore: {
     fontSize: 52,
-    fontWeight: '900',
-    color: '#17251d',
+    fontWeight: "900",
+    color: "#17251d",
   },
   summaryGrid: {
-    flexDirection: 'row',
-    flexWrap: 'wrap',
+    flexDirection: "row",
+    flexWrap: "wrap",
     gap: 10,
     marginTop: 12,
   },
   statCard: {
-    width: '48.4%',
+    width: "48.4%",
     minHeight: 95,
-    backgroundColor: '#ffffff',
+    backgroundColor: "#ffffff",
     borderRadius: 8,
     padding: 14,
     borderWidth: 1,
-    borderColor: '#dce5dc',
+    borderColor: "#dce5dc",
   },
   statValue: {
     marginTop: 7,
-    color: '#17251d',
+    color: "#17251d",
     fontSize: 24,
-    fontWeight: '900',
+    fontWeight: "900",
   },
   sectionCard: {
-    backgroundColor: '#ffffff',
+    backgroundColor: "#ffffff",
     borderRadius: 8,
     padding: 16,
     borderWidth: 1,
-    borderColor: '#dce5dc',
+    borderColor: "#dce5dc",
     marginBottom: 12,
     gap: 12,
   },
   cardHeader: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'space-between',
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "space-between",
     gap: 12,
   },
   cardTitle: {
-    color: '#17251d',
+    color: "#17251d",
     fontSize: 18,
-    fontWeight: '900',
+    fontWeight: "900",
   },
   bodyText: {
-    color: '#58645d',
+    color: "#58645d",
     lineHeight: 20,
     fontSize: 14,
   },
   autoBadge: {
-    backgroundColor: '#eef2ef',
+    backgroundColor: "#eef2ef",
     borderRadius: 8,
     paddingHorizontal: 12,
     paddingVertical: 9,
   },
   autoBadgeActive: {
-    backgroundColor: '#214b35',
+    backgroundColor: "#214b35",
   },
   autoText: {
-    color: '#5b675f',
-    fontWeight: '900',
+    color: "#5b675f",
+    fontWeight: "900",
     fontSize: 12,
   },
   autoTextActive: {
-    color: '#ffffff',
+    color: "#ffffff",
   },
   autoHint: {
-    backgroundColor: '#eef7f1',
-    color: '#2d6340',
+    backgroundColor: "#eef7f1",
+    color: "#2d6340",
     borderRadius: 8,
     padding: 10,
     fontSize: 12,
-    fontWeight: '800',
+    fontWeight: "800",
     lineHeight: 17,
   },
   plantRail: {
@@ -1646,42 +2032,42 @@ const styles = StyleSheet.create({
   plantPill: {
     minWidth: 120,
     height: 70,
-    backgroundColor: '#ffffff',
+    backgroundColor: "#ffffff",
     borderRadius: 8,
     borderWidth: 1,
-    borderColor: '#dce5dc',
+    borderColor: "#dce5dc",
     padding: 12,
   },
   plantPillActive: {
-    backgroundColor: '#214b35',
-    borderColor: '#214b35',
+    backgroundColor: "#214b35",
+    borderColor: "#214b35",
   },
   plantPillText: {
-    color: '#17251d',
-    fontWeight: '900',
+    color: "#17251d",
+    fontWeight: "900",
   },
   plantPillMeta: {
-    color: '#66736b',
+    color: "#66736b",
     marginTop: 4,
     fontSize: 12,
   },
   plantPillTextActive: {
-    color: '#ffffff',
+    color: "#ffffff",
   },
   grid: {
-    flexDirection: 'row',
-    flexWrap: 'wrap',
+    flexDirection: "row",
+    flexWrap: "wrap",
     gap: 10,
     marginTop: 12,
   },
   sensorCard: {
-    width: '48.4%',
+    width: "48.4%",
     minHeight: 126,
-    backgroundColor: '#ffffff',
+    backgroundColor: "#ffffff",
     borderRadius: 8,
     padding: 14,
     borderWidth: 1,
-    borderColor: '#dce5dc',
+    borderColor: "#dce5dc",
   },
   statusDot: {
     width: 10,
@@ -1690,73 +2076,73 @@ const styles = StyleSheet.create({
     marginBottom: 12,
   },
   statusOk: {
-    backgroundColor: '#2d7d4a',
+    backgroundColor: "#2d7d4a",
   },
   statusWarn: {
-    backgroundColor: '#d6604d',
+    backgroundColor: "#d6604d",
   },
   sensorLabel: {
     fontSize: 12,
-    color: '#6b766f',
-    fontWeight: '800',
+    color: "#6b766f",
+    fontWeight: "800",
   },
   sensorValue: {
     marginTop: 4,
     fontSize: 24,
-    fontWeight: '900',
-    color: '#17251d',
+    fontWeight: "900",
+    color: "#17251d",
   },
   sensorTarget: {
     marginTop: 4,
-    color: '#6d7971',
+    color: "#6d7971",
     fontSize: 11,
-    fontWeight: '700',
+    fontWeight: "700",
   },
   sensorStatus: {
     marginTop: 6,
     fontSize: 12,
-    fontWeight: '900',
+    fontWeight: "900",
   },
   okText: {
-    color: '#2d7d4a',
+    color: "#2d7d4a",
   },
   warnText: {
-    color: '#c14f3d',
+    color: "#c14f3d",
   },
   metricText: {
-    color: '#66736b',
+    color: "#66736b",
     fontSize: 12,
-    fontWeight: '800',
+    fontWeight: "800",
     lineHeight: 18,
     marginTop: 8,
   },
   sectionTitle: {
     marginTop: 22,
     marginBottom: 10,
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
+    flexDirection: "row",
+    justifyContent: "space-between",
+    alignItems: "center",
   },
   sectionText: {
     fontSize: 18,
-    fontWeight: '900',
-    color: '#17251d',
+    fontWeight: "900",
+    color: "#17251d",
   },
   sectionAction: {
     fontSize: 12,
-    color: '#69756e',
-    fontWeight: '800',
+    color: "#69756e",
+    fontWeight: "800",
     maxWidth: 170,
-    textAlign: 'right',
+    textAlign: "right",
   },
   alertRow: {
-    backgroundColor: '#fff9ed',
-    borderColor: '#f2dcaa',
+    backgroundColor: "#fff9ed",
+    borderColor: "#f2dcaa",
     borderWidth: 1,
     borderRadius: 8,
     padding: 12,
-    flexDirection: 'row',
-    alignItems: 'center',
+    flexDirection: "row",
+    alignItems: "center",
     gap: 10,
     marginBottom: 8,
   },
@@ -1764,336 +2150,336 @@ const styles = StyleSheet.create({
     width: 26,
     height: 26,
     borderRadius: 8,
-    backgroundColor: '#f0b429',
-    alignItems: 'center',
-    justifyContent: 'center',
+    backgroundColor: "#f0b429",
+    alignItems: "center",
+    justifyContent: "center",
   },
   alertIconText: {
-    color: '#ffffff',
-    fontWeight: '900',
+    color: "#ffffff",
+    fontWeight: "900",
   },
   alertText: {
     flex: 1,
-    color: '#594a1f',
-    fontWeight: '800',
+    color: "#594a1f",
+    fontWeight: "800",
     lineHeight: 19,
   },
   controlCard: {
-    backgroundColor: '#f7faf7',
+    backgroundColor: "#f7faf7",
     borderRadius: 8,
     padding: 12,
     borderWidth: 1,
-    borderColor: '#dce5dc',
+    borderColor: "#dce5dc",
     gap: 10,
   },
   controlCardDisabled: {
-    backgroundColor: '#eef2ef',
+    backgroundColor: "#eef2ef",
   },
   controlHeader: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
+    flexDirection: "row",
+    justifyContent: "space-between",
+    alignItems: "center",
   },
   controlLabel: {
-    color: '#17251d',
-    fontWeight: '900',
+    color: "#17251d",
+    fontWeight: "900",
     fontSize: 15,
   },
   controlState: {
-    color: '#2d7d4a',
-    fontWeight: '900',
+    color: "#2d7d4a",
+    fontWeight: "900",
   },
   controlStateDisabled: {
-    color: '#718078',
+    color: "#718078",
   },
   adjustRow: {
-    flexDirection: 'row',
+    flexDirection: "row",
     gap: 8,
   },
   adjustButton: {
     flex: 1,
-    backgroundColor: '#214b35',
+    backgroundColor: "#214b35",
     borderRadius: 8,
-    alignItems: 'center',
+    alignItems: "center",
     paddingVertical: 9,
   },
   adjustButtonDisabled: {
-    backgroundColor: '#a8b5ad',
+    backgroundColor: "#a8b5ad",
   },
   adjustText: {
-    color: '#ffffff',
+    color: "#ffffff",
     fontSize: 18,
-    fontWeight: '900',
+    fontWeight: "900",
   },
   progressTrack: {
     height: 10,
-    backgroundColor: '#dfe8df',
+    backgroundColor: "#dfe8df",
     borderRadius: 6,
-    overflow: 'hidden',
+    overflow: "hidden",
   },
   progressFill: {
-    height: '100%',
+    height: "100%",
     borderRadius: 6,
   },
   chart: {
     height: 122,
-    backgroundColor: '#ffffff',
+    backgroundColor: "#ffffff",
     borderRadius: 8,
     borderWidth: 1,
-    borderColor: '#dce5dc',
+    borderColor: "#dce5dc",
     padding: 14,
-    flexDirection: 'row',
-    alignItems: 'flex-end',
+    flexDirection: "row",
+    alignItems: "flex-end",
     gap: 7,
   },
   chartColumn: {
     flex: 1,
-    alignItems: 'center',
-    justifyContent: 'flex-end',
+    alignItems: "center",
+    justifyContent: "flex-end",
   },
   chartBar: {
-    width: '82%',
+    width: "82%",
     borderRadius: 5,
-    backgroundColor: '#65a871',
+    backgroundColor: "#65a871",
   },
   formCard: {
-    backgroundColor: '#ffffff',
+    backgroundColor: "#ffffff",
     borderRadius: 8,
     borderWidth: 1,
-    borderColor: '#dce5dc',
+    borderColor: "#dce5dc",
     padding: 16,
     gap: 10,
   },
   monthCard: {
-    backgroundColor: '#ffffff',
+    backgroundColor: "#ffffff",
     borderRadius: 8,
     borderWidth: 1,
-    borderColor: '#dce5dc',
+    borderColor: "#dce5dc",
     padding: 14,
     marginBottom: 12,
   },
   monthHeader: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'space-between',
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "space-between",
     marginBottom: 12,
   },
   monthTitle: {
-    color: '#17251d',
+    color: "#17251d",
     fontSize: 20,
-    fontWeight: '900',
+    fontWeight: "900",
   },
   monthButton: {
     width: 38,
     height: 38,
     borderRadius: 8,
-    backgroundColor: '#e3f1e8',
-    alignItems: 'center',
-    justifyContent: 'center',
+    backgroundColor: "#e3f1e8",
+    alignItems: "center",
+    justifyContent: "center",
   },
   monthButtonText: {
-    color: '#235b37',
+    color: "#235b37",
     fontSize: 24,
-    fontWeight: '900',
+    fontWeight: "900",
   },
   weekRow: {
-    flexDirection: 'row',
+    flexDirection: "row",
     marginBottom: 6,
   },
   weekText: {
     flex: 1,
-    textAlign: 'center',
-    color: '#69756e',
+    textAlign: "center",
+    color: "#69756e",
     fontSize: 12,
-    fontWeight: '900',
+    fontWeight: "900",
   },
   calendarGrid: {
-    flexDirection: 'row',
-    flexWrap: 'wrap',
+    flexDirection: "row",
+    flexWrap: "wrap",
   },
   dayCell: {
-    width: '14.285%',
+    width: "14.285%",
     aspectRatio: 1,
     borderRadius: 0,
-    backgroundColor: '#f7faf7',
-    alignItems: 'center',
-    justifyContent: 'center',
+    backgroundColor: "#f7faf7",
+    alignItems: "center",
+    justifyContent: "center",
     borderWidth: 1,
-    borderColor: '#e0e8e1',
+    borderColor: "#e0e8e1",
   },
   dayCellSelected: {
-    backgroundColor: '#214b35',
-    borderColor: '#214b35',
+    backgroundColor: "#214b35",
+    borderColor: "#214b35",
   },
   dayText: {
-    color: '#39483f',
-    fontWeight: '900',
+    color: "#39483f",
+    fontWeight: "900",
     fontSize: 12,
   },
   dayTextSelected: {
-    color: '#ffffff',
+    color: "#ffffff",
   },
   eventDot: {
     width: 5,
     height: 5,
     borderRadius: 3,
-    backgroundColor: '#f0b429',
+    backgroundColor: "#f0b429",
     marginTop: 3,
   },
   cropChoiceRow: {
-    flexDirection: 'row',
-    flexWrap: 'wrap',
+    flexDirection: "row",
+    flexWrap: "wrap",
     gap: 8,
   },
   cropChoice: {
     borderRadius: 8,
     borderWidth: 1,
-    borderColor: '#dce5dc',
-    backgroundColor: '#f7faf7',
+    borderColor: "#dce5dc",
+    backgroundColor: "#f7faf7",
     paddingHorizontal: 10,
     paddingVertical: 9,
   },
   cropChoiceActive: {
-    backgroundColor: '#214b35',
-    borderColor: '#214b35',
+    backgroundColor: "#214b35",
+    borderColor: "#214b35",
   },
   cropChoiceText: {
-    color: '#4c5c53',
+    color: "#4c5c53",
     fontSize: 12,
-    fontWeight: '900',
+    fontWeight: "900",
   },
   cropChoiceTextActive: {
-    color: '#ffffff',
+    color: "#ffffff",
   },
   suggestionBox: {
-    backgroundColor: '#eef7f1',
+    backgroundColor: "#eef7f1",
     borderRadius: 8,
     borderWidth: 1,
-    borderColor: '#c9dfcf',
+    borderColor: "#c9dfcf",
     padding: 12,
   },
   input: {
     minHeight: 46,
-    backgroundColor: '#f7faf7',
+    backgroundColor: "#f7faf7",
     borderRadius: 8,
     borderWidth: 1,
-    borderColor: '#dce5dc',
+    borderColor: "#dce5dc",
     paddingHorizontal: 12,
-    color: '#17251d',
-    fontWeight: '700',
+    color: "#17251d",
+    fontWeight: "700",
   },
   primaryButton: {
-    backgroundColor: '#214b35',
+    backgroundColor: "#214b35",
     borderRadius: 8,
     paddingVertical: 14,
-    alignItems: 'center',
+    alignItems: "center",
   },
   primaryButtonText: {
-    color: '#ffffff',
-    fontWeight: '900',
+    color: "#ffffff",
+    fontWeight: "900",
   },
   smallButton: {
-    backgroundColor: '#e3f1e8',
+    backgroundColor: "#e3f1e8",
     borderRadius: 8,
     paddingHorizontal: 12,
     paddingVertical: 9,
-    alignItems: 'center',
+    alignItems: "center",
   },
   smallButtonText: {
-    color: '#235b37',
-    fontWeight: '900',
+    color: "#235b37",
+    fontWeight: "900",
     fontSize: 12,
   },
   deleteButton: {
-    backgroundColor: '#fde8e3',
+    backgroundColor: "#fde8e3",
   },
   deleteButtonText: {
-    color: '#c14f3d',
-    fontWeight: '900',
+    color: "#c14f3d",
+    fontWeight: "900",
     fontSize: 12,
   },
   calendarCard: {
-    backgroundColor: '#ffffff',
+    backgroundColor: "#ffffff",
     borderRadius: 8,
     borderWidth: 1,
-    borderColor: '#dce5dc',
+    borderColor: "#dce5dc",
     padding: 14,
-    flexDirection: 'row',
+    flexDirection: "row",
     gap: 12,
     marginBottom: 10,
   },
   calendarActions: {
     gap: 8,
-    justifyContent: 'center',
+    justifyContent: "center",
   },
   scanner: {
-    backgroundColor: '#ffffff',
+    backgroundColor: "#ffffff",
     borderRadius: 8,
     borderWidth: 1,
-    borderColor: '#dce5dc',
+    borderColor: "#dce5dc",
     padding: 16,
   },
   cameraFrame: {
     height: 330,
-    backgroundColor: '#1a2520',
+    backgroundColor: "#1a2520",
     borderRadius: 8,
-    alignItems: 'center',
-    justifyContent: 'center',
-    overflow: 'hidden',
+    alignItems: "center",
+    justifyContent: "center",
+    overflow: "hidden",
   },
   scanLeaf: {
     width: 148,
     height: 210,
     borderRadius: 74,
-    backgroundColor: '#3f9b63',
-    transform: [{ rotate: '-18deg' }],
+    backgroundColor: "#3f9b63",
+    transform: [{ rotate: "-18deg" }],
   },
   uploadedImage: {
-    width: '100%',
-    height: '100%',
+    width: "100%",
+    height: "100%",
   },
   scanLine: {
-    position: 'absolute',
-    width: '86%',
+    position: "absolute",
+    width: "86%",
     height: 3,
-    backgroundColor: '#d9ffec',
+    backgroundColor: "#d9ffec",
     top: 150,
   },
   cameraText: {
-    position: 'absolute',
+    position: "absolute",
     bottom: 18,
-    color: '#d8eee0',
-    fontWeight: '900',
+    color: "#d8eee0",
+    fontWeight: "900",
   },
   scanActions: {
-    flexDirection: 'row',
+    flexDirection: "row",
     gap: 8,
     marginTop: 14,
   },
   scanButton: {
-    backgroundColor: '#214b35',
+    backgroundColor: "#214b35",
     borderRadius: 8,
     paddingVertical: 13,
-    alignItems: 'center',
+    alignItems: "center",
     flex: 1,
   },
   cameraButton: {
-    backgroundColor: '#5f6f3b',
+    backgroundColor: "#5f6f3b",
   },
   uploadButton: {
-    backgroundColor: '#386f96',
+    backgroundColor: "#386f96",
   },
   scanButtonText: {
-    color: '#ffffff',
-    fontWeight: '900',
+    color: "#ffffff",
+    fontWeight: "900",
     fontSize: 12,
   },
   diagnosisCard: {
-    backgroundColor: '#ffffff',
+    backgroundColor: "#ffffff",
     borderRadius: 8,
     borderWidth: 1,
-    borderColor: '#dce5dc',
-    overflow: 'hidden',
+    borderColor: "#dce5dc",
+    overflow: "hidden",
   },
   diagnosisStrip: {
     height: 8,
@@ -2103,49 +2489,49 @@ const styles = StyleSheet.create({
     gap: 10,
   },
   diagnosisTitle: {
-    color: '#17251d',
+    color: "#17251d",
     fontSize: 20,
-    fontWeight: '900',
+    fontWeight: "900",
   },
   recommendationText: {
-    color: '#245038',
+    color: "#245038",
     lineHeight: 21,
     fontSize: 14,
-    fontWeight: '800',
+    fontWeight: "800",
   },
   tabBar: {
-    position: 'absolute',
+    position: "absolute",
     left: 12,
     right: 12,
     bottom: 12,
     maxWidth: 760,
-    alignSelf: 'center',
-    backgroundColor: '#ffffff',
+    alignSelf: "center",
+    backgroundColor: "#ffffff",
     borderRadius: 8,
     borderWidth: 1,
-    borderColor: '#d3ddd3',
+    borderColor: "#d3ddd3",
     padding: 7,
-    flexDirection: 'row',
+    flexDirection: "row",
     gap: 5,
   },
   tabItem: {
     flex: 1,
     minHeight: 48,
     borderRadius: 7,
-    alignItems: 'center',
-    justifyContent: 'center',
+    alignItems: "center",
+    justifyContent: "center",
     paddingHorizontal: 4,
   },
   tabItemActive: {
-    backgroundColor: '#214b35',
+    backgroundColor: "#214b35",
   },
   tabText: {
-    color: '#637068',
+    color: "#637068",
     fontSize: 11,
-    fontWeight: '900',
-    textAlign: 'center',
+    fontWeight: "900",
+    textAlign: "center",
   },
   tabTextActive: {
-    color: '#ffffff',
+    color: "#ffffff",
   },
 });
