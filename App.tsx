@@ -25,6 +25,9 @@ type Diagnosis = {
   symptoms: string;
   action: string;
   isPlant: boolean;
+  source?: string;
+  aiLabel?: string;
+  aiError?: string;
   metrics?: {
     plantScore: number;
     greenRatio: number;
@@ -255,7 +258,30 @@ const waitingDiagnosis: Diagnosis = {
     "Plant Doctor needs a leaf photo before it can verify and diagnose the plant.",
   action: "Use the camera or upload a close-up image of a plant leaf.",
   isPlant: false,
+  source: "Free offline AI",
 };
+
+const huggingFaceImageModel =
+  getPublicEnv("EXPO_PUBLIC_HUGGINGFACE_MODEL") ??
+  "mesabo/agri-plant-disease-resnet50";
+const huggingFaceApiUrl = `https://router.huggingface.co/hf-inference/models/${huggingFaceImageModel}`;
+const geminiVisionModel =
+  getPublicEnv("EXPO_PUBLIC_GEMINI_MODEL") ?? "gemini-2.5-flash";
+
+function getPublicEnv(key: string) {
+  return (globalThis as any).process?.env?.[key] as string | undefined;
+}
+
+function shortenAiError(message: string) {
+  return message.length > 120 ? `${message.slice(0, 117)}...` : message;
+}
+
+function aiText(value: unknown): string {
+  if (typeof value === "string") return value.trim();
+  if (Array.isArray(value)) return value.map(aiText).filter(Boolean).join(" ");
+  if (value && typeof value === "object") return JSON.stringify(value);
+  return "";
+}
 
 function clamp(value: number, min: number, max: number) {
   return Math.max(min, Math.min(max, value));
@@ -611,6 +637,302 @@ async function analyzeImageOnWeb(uri: string): Promise<Diagnosis> {
   return analyzeRgbaPixels(pixels, size * size);
 }
 
+function withFreeAiSource(diagnosis: Diagnosis): Diagnosis {
+  return {
+    ...diagnosis,
+    source: diagnosis.source ?? "Free offline AI",
+  };
+}
+
+function shouldAskOnlineAi(diagnosis: Diagnosis) {
+  const metrics = diagnosis.metrics;
+
+  if (diagnosis.isPlant) return true;
+  if (!metrics) return false;
+
+  return (
+    metrics.plantScore >= 45 ||
+    metrics.greenRatio >= 12 ||
+    metrics.yellowRatio + metrics.brownRatio >= 28
+  );
+}
+
+function formatAiLabel(label: string) {
+  return label
+    .replace(/___/g, " - ")
+    .replace(/__/g, " - ")
+    .replace(/_/g, " ")
+    .replace(/\s+/g, " ")
+    .trim();
+}
+
+function diagnosisFromAiLabel(
+  label: string,
+  score: number,
+  fallback: Diagnosis,
+): Diagnosis {
+  const readableLabel = formatAiLabel(label);
+  const confidence = clamp(Math.round(score * 100), 1, 99);
+  const lowerLabel = readableLabel.toLowerCase();
+  const isHealthy = lowerLabel.includes("healthy");
+  const isDisease =
+    lowerLabel.includes("blight") ||
+    lowerLabel.includes("rust") ||
+    lowerLabel.includes("spot") ||
+    lowerLabel.includes("mildew") ||
+    lowerLabel.includes("rot") ||
+    lowerLabel.includes("scab") ||
+    lowerLabel.includes("virus") ||
+    lowerLabel.includes("mold") ||
+    lowerLabel.includes("scorch") ||
+    lowerLabel.includes("mite");
+
+  if (isHealthy) {
+    return {
+      ...fallback,
+      title: "AI says healthy leaf",
+      confidence,
+      color: "#3f9b63",
+      symptoms: `The free AI model classified this as ${readableLabel}. Local pixel checks also measured green/yellow/brown plant signals.`,
+      action:
+        "Maintain the current crop profile and scan again if color or texture changes.",
+      isPlant: true,
+      source: "Hugging Face free-tier API",
+      aiLabel: readableLabel,
+    };
+  }
+
+  if (isDisease) {
+    return {
+      ...fallback,
+      title: "AI disease match",
+      confidence,
+      color: "#d6604d",
+      symptoms: `The free AI model matched this leaf to ${readableLabel}. Treat this as a screening result, not a lab diagnosis.`,
+      action:
+        "Isolate the affected tray, remove damaged leaves, stabilize humidity, and rescan after treatment.",
+      isPlant: true,
+      source: "Hugging Face free-tier API",
+      aiLabel: readableLabel,
+    };
+  }
+
+  return {
+    ...fallback,
+    confidence: Math.max(fallback.confidence, confidence),
+    symptoms: `${fallback.symptoms} The free AI model returned ${readableLabel}.`,
+    source: "Hugging Face free-tier API",
+    aiLabel: readableLabel,
+  };
+}
+
+async function imageUriToBase64ForAi(uri: string) {
+  if (Platform.OS !== "web") {
+    const manipulated = await ImageManipulator.manipulateAsync(
+      uri,
+      [{ resize: { width: 224 } }],
+      {
+        base64: true,
+        compress: 0.85,
+        format: ImageManipulator.SaveFormat.JPEG,
+      },
+    );
+
+    if (!manipulated.base64) {
+      throw new Error("No base64 image data returned");
+    }
+
+    return {
+      base64: manipulated.base64,
+      mimeType: "image/jpeg",
+    };
+  }
+
+  const response = await fetch(uri);
+  const blob = await response.blob();
+  const web = globalThis as any;
+
+  return new Promise<{ base64: string; mimeType: string }>(
+    (resolve, reject) => {
+    const reader = new web.FileReader();
+    reader.onloadend = () => {
+      const result = String(reader.result ?? "");
+      const [, base64 = ""] = result.split(",");
+        resolve({
+          base64,
+          mimeType: blob.type || "image/jpeg",
+        });
+    };
+    reader.onerror = () => reject(new Error("Image failed to convert"));
+    reader.readAsDataURL(blob);
+    },
+  );
+}
+
+function extractJsonObject(text: string) {
+  const start = text.indexOf("{");
+  const end = text.lastIndexOf("}");
+  if (start === -1 || end === -1 || end <= start) {
+    throw new Error("Gemini returned text instead of JSON");
+  }
+
+  return JSON.parse(text.slice(start, end + 1)) as {
+    title?: unknown;
+    confidence?: number;
+    isPlant?: boolean;
+    symptoms?: unknown;
+    action?: unknown;
+  };
+}
+
+async function analyzeImageWithGemini(
+  image: { base64: string; mimeType: string },
+  localDiagnosis: Diagnosis,
+  apiKey: string,
+): Promise<Diagnosis> {
+  const metricsHint = localDiagnosis.metrics
+    ? `Local RGB scan: plantScore ${localDiagnosis.metrics.plantScore}%, green ${localDiagnosis.metrics.greenRatio}%, yellow ${localDiagnosis.metrics.yellowRatio}%, brown ${localDiagnosis.metrics.brownRatio}%.`
+    : "Local RGB scan did not return metrics.";
+  const response = await fetch(
+    `https://generativelanguage.googleapis.com/v1beta/models/${geminiVisionModel}:generateContent`,
+    {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        "x-goog-api-key": apiKey,
+      },
+      body: JSON.stringify({
+        contents: [
+          {
+            parts: [
+              {
+                inline_data: {
+                  mime_type: image.mimeType,
+                  data: image.base64,
+                },
+              },
+              {
+                text:
+                  `You are Plant Doctor for a student vertical-farming app. Analyze this image for plant health. The local RGB scan may be wrong for red, yellow, brown, dry, or variegated real plants, so judge the actual image yourself. ${metricsHint} Return only JSON with keys title, confidence, isPlant, symptoms, action. Confidence must be 0-100. If it is clearly not a real plant, set isPlant false.`,
+              },
+            ],
+          },
+        ],
+        generationConfig: {
+          responseMimeType: "application/json",
+        },
+      }),
+    },
+  );
+
+  const responseText = await response.text();
+
+  if (!response.ok) {
+    throw new Error(`Gemini HTTP ${response.status}: ${shortenAiError(responseText)}`);
+  }
+
+  const payload = JSON.parse(responseText) as {
+    candidates?: Array<{
+      content?: {
+        parts?: Array<{ text?: string }>;
+      };
+    }>;
+  };
+  const text = payload.candidates?.[0]?.content?.parts?.[0]?.text ?? "";
+  const result = extractJsonObject(text);
+  const confidence =
+    typeof result.confidence === "number"
+      ? clamp(Math.round(result.confidence), 1, 99)
+      : localDiagnosis.confidence;
+  const isPlant = result.isPlant ?? localDiagnosis.isPlant;
+  const title = aiText(result.title);
+  const symptoms = aiText(result.symptoms);
+  const action = aiText(result.action);
+
+  return {
+    ...localDiagnosis,
+    title: title || localDiagnosis.title,
+    confidence,
+    color: isPlant
+      ? title.toLowerCase().includes("healthy")
+        ? "#3f9b63"
+        : localDiagnosis.color
+      : "#c14f3d",
+    symptoms: symptoms || localDiagnosis.symptoms,
+    action: action || localDiagnosis.action,
+    isPlant,
+    source: "Gemini free-tier vision API",
+    aiLabel: title,
+  };
+}
+
+async function analyzeImageWithFreeAi(uri: string): Promise<Diagnosis> {
+  const localDiagnosis = withFreeAiSource(await analyzeImageOnWeb(uri));
+  const geminiKey = getPublicEnv("EXPO_PUBLIC_GEMINI_API_KEY");
+  const huggingFaceToken = getPublicEnv("EXPO_PUBLIC_HUGGINGFACE_TOKEN");
+
+  if (!shouldAskOnlineAi(localDiagnosis)) {
+    return localDiagnosis;
+  }
+
+  try {
+    const image = await imageUriToBase64ForAi(uri);
+
+    if (geminiKey) {
+      return await analyzeImageWithGemini(image, localDiagnosis, geminiKey);
+    }
+
+    if (!huggingFaceToken) {
+      return localDiagnosis;
+    }
+
+    const response = await fetch(huggingFaceApiUrl, {
+      method: "POST",
+      headers: {
+        Authorization: `Bearer ${huggingFaceToken}`,
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify({
+        inputs: image.base64,
+        parameters: { top_k: 3 },
+      }),
+    });
+
+    const responseText = await response.text();
+
+    if (!response.ok) {
+      throw new Error(
+        `HTTP ${response.status}: ${shortenAiError(responseText)}`,
+      );
+    }
+
+    const predictions = JSON.parse(responseText) as Array<{
+      label?: string;
+      score?: number;
+    }>;
+    const topPrediction = predictions
+      .filter((item) => item.label && typeof item.score === "number")
+      .sort((a, b) => (b.score ?? 0) - (a.score ?? 0))[0];
+
+    if (!topPrediction?.label || topPrediction.score === undefined) {
+      return localDiagnosis;
+    }
+
+    return diagnosisFromAiLabel(
+      topPrediction.label,
+      topPrediction.score,
+      localDiagnosis,
+    );
+  } catch (error) {
+    return {
+      ...localDiagnosis,
+      source: "Free offline AI, API unavailable",
+      aiError:
+        error instanceof Error ? shortenAiError(error.message) : "Unknown API error",
+    };
+  }
+}
+
 function shouldUseCameraPicker() {
   return Platform.OS !== "web";
 }
@@ -821,7 +1143,7 @@ export default function App() {
 
     setIsScanning(true);
     try {
-      setScan(await analyzeImageOnWeb(uri));
+      setScan(await analyzeImageWithFreeAi(uri));
     } catch {
       setScan({
         title: "Image could not be verified",
@@ -1569,6 +1891,15 @@ function DoctorPage({
               {scan.metrics.greenRatio}% | Yellow {scan.metrics.yellowRatio}% |
               Brown {scan.metrics.brownRatio}%
             </Text>
+          )}
+          {scan.source && (
+            <Text style={styles.metricText}>
+              AI source: {scan.source}
+              {scan.aiLabel ? ` | Match: ${scan.aiLabel}` : ""}
+            </Text>
+          )}
+          {scan.aiError && (
+            <Text style={styles.metricText}>API error: {scan.aiError}</Text>
           )}
         </View>
       </View>
