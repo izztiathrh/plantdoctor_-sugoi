@@ -754,17 +754,17 @@ async function imageUriToBase64ForAi(uri: string) {
 
   return new Promise<{ base64: string; mimeType: string }>(
     (resolve, reject) => {
-    const reader = new web.FileReader();
-    reader.onloadend = () => {
-      const result = String(reader.result ?? "");
-      const [, base64 = ""] = result.split(",");
+      const reader = new web.FileReader();
+      reader.onloadend = () => {
+        const result = String(reader.result ?? "");
+        const [, base64 = ""] = result.split(",");
         resolve({
           base64,
           mimeType: blob.type || "image/jpeg",
         });
-    };
-    reader.onerror = () => reject(new Error("Image failed to convert"));
-    reader.readAsDataURL(blob);
+      };
+      reader.onerror = () => reject(new Error("Image failed to convert"));
+      reader.readAsDataURL(blob);
     },
   );
 }
@@ -812,8 +812,7 @@ async function analyzeImageWithGemini(
                 },
               },
               {
-                text:
-                  `You are Plant Doctor for a student vertical-farming app. Analyze this image for plant health. The local RGB scan may be wrong for red, yellow, brown, dry, or variegated real plants, so judge the actual image yourself. ${metricsHint} Return only JSON with keys title, confidence, isPlant, symptoms, action. Confidence must be 0-100. If it is clearly not a real plant, set isPlant false.`,
+                text: `You are Plant Doctor for a student vertical-farming app. Analyze this image for plant health. The local RGB scan may be wrong for red, yellow, brown, dry, or variegated real plants, so judge the actual image yourself. ${metricsHint} Return only JSON with keys title, confidence, isPlant, symptoms, action. Confidence must be 0-100. If it is clearly not a real plant, set isPlant false.`,
               },
             ],
           },
@@ -828,7 +827,9 @@ async function analyzeImageWithGemini(
   const responseText = await response.text();
 
   if (!response.ok) {
-    throw new Error(`Gemini HTTP ${response.status}: ${shortenAiError(responseText)}`);
+    throw new Error(
+      `Gemini HTTP ${response.status}: ${shortenAiError(responseText)}`,
+    );
   }
 
   const payload = JSON.parse(responseText) as {
@@ -928,7 +929,9 @@ async function analyzeImageWithFreeAi(uri: string): Promise<Diagnosis> {
       ...localDiagnosis,
       source: "Free offline AI, API unavailable",
       aiError:
-        error instanceof Error ? shortenAiError(error.message) : "Unknown API error",
+        error instanceof Error
+          ? shortenAiError(error.message)
+          : "Unknown API error",
     };
   }
 }
@@ -1226,10 +1229,7 @@ export default function App() {
     <SafeAreaView style={styles.app}>
       <StatusBar style="dark" />
       <View style={styles.header}>
-        <View>
-          <Text style={styles.appName}>GrowMind</Text>
-          <Text style={styles.subtitle}>Precision vertical farm assistant</Text>
-        </View>
+        <GrowMindLogo />
         <View style={styles.liveBadge}>
           <View style={styles.liveDot} />
           <Text style={styles.liveText}>LIVE</Text>
@@ -1815,6 +1815,25 @@ function CalendarPage({
   );
 }
 
+function GrowMindLogo() {
+  return (
+    <View style={styles.logoLockup}>
+      <View style={styles.logoMark}>
+        <View style={[styles.logoLeaf, styles.logoLeafLeft]} />
+        <View style={[styles.logoLeaf, styles.logoLeafRight]} />
+        <View style={styles.logoStem} />
+      </View>
+      <View>
+        <View style={styles.logoWordRow}>
+          <Text style={styles.logoWordGrow}>Plant</Text>
+          <Text style={styles.logoWordMind}>Doctor</Text>
+        </View>
+        <Text style={styles.subtitle}>Precision Farm Assistant</Text>
+      </View>
+    </View>
+  );
+}
+
 function DoctorPage({
   imageUri,
   scan,
@@ -2081,10 +2100,62 @@ const styles = StyleSheet.create({
     maxWidth: 760,
     alignSelf: "center",
   },
-  appName: {
-    fontSize: 30,
+  logoLockup: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 10,
+    flexShrink: 1,
+  },
+  logoMark: {
+    width: 42,
+    height: 42,
+    borderRadius: 8,
+    backgroundColor: "#173e2b",
+    alignItems: "center",
+    justifyContent: "center",
+    overflow: "hidden",
+  },
+  logoLeaf: {
+    position: "absolute",
+    width: 18,
+    height: 26,
+    borderTopLeftRadius: 18,
+    borderTopRightRadius: 18,
+    borderBottomLeftRadius: 3,
+    borderBottomRightRadius: 18,
+  },
+  logoLeafLeft: {
+    backgroundColor: "#82c46c",
+    left: 9,
+    top: 8,
+    transform: [{ rotate: "-36deg" }],
+  },
+  logoLeafRight: {
+    backgroundColor: "#d9f2a3",
+    right: 8,
+    top: 11,
+    transform: [{ rotate: "38deg" }],
+  },
+  logoStem: {
+    width: 3,
+    height: 25,
+    borderRadius: 2,
+    backgroundColor: "#f5ffe4",
+    transform: [{ rotate: "34deg" }],
+  },
+  logoWordRow: {
+    flexDirection: "row",
+    alignItems: "baseline",
+  },
+  logoWordGrow: {
+    fontSize: 29,
     fontWeight: "900",
-    color: "#17251d",
+    color: "#173e2b",
+  },
+  logoWordMind: {
+    fontSize: 29,
+    fontWeight: "900",
+    color: "#4f7b34",
   },
   subtitle: {
     fontSize: 13,
