@@ -77,6 +77,14 @@ type CalendarItem = {
 
 const tabs: TabKey[] = ["My Farm", "My Plants", "Home", "Calendar", "Doctor"];
 
+const tabLabels: Record<TabKey, string> = {
+  "My Farm": "Farm",
+  "My Plants": "Plants",
+  Home: "Home",
+  Calendar: "Calendar",
+  Doctor: "Doctor",
+};
+
 const cropTargets: Record<
   CropKey,
   {
@@ -1308,18 +1316,71 @@ export default function App() {
             onPress={() => setActiveTab(tab)}
             style={[styles.tabItem, activeTab === tab && styles.tabItemActive]}
           >
+            <TabIcon tab={tab} active={activeTab === tab} />
             <Text
               style={[
                 styles.tabText,
                 activeTab === tab && styles.tabTextActive,
               ]}
             >
-              {tab}
+              {tabLabels[tab]}
             </Text>
           </Pressable>
         ))}
       </View>
     </SafeAreaView>
+  );
+}
+
+function TabIcon({ tab, active }: { tab: TabKey; active: boolean }) {
+  const color = active ? "#ffffff" : "#637068";
+
+  if (tab === "My Farm") {
+    return (
+      <View style={styles.tabIconBox}>
+        <View style={[styles.farmRoof, { borderBottomColor: color }]} />
+        <View style={[styles.farmBase, { borderColor: color }]} />
+      </View>
+    );
+  }
+
+  if (tab === "My Plants") {
+    return (
+      <View style={styles.tabIconBox}>
+        <View style={[styles.plantsPotIcon, { borderColor: color }]} />
+        <View style={[styles.plantsStemIcon, { backgroundColor: color }]} />
+        <View style={[styles.plantsLeafIcon, styles.plantsLeafLeftIcon, { backgroundColor: color }]} />
+        <View style={[styles.plantsLeafIcon, styles.plantsLeafRightIcon, { backgroundColor: color }]} />
+      </View>
+    );
+  }
+
+  if (tab === "Calendar") {
+    return (
+      <View style={[styles.calendarIcon, { borderColor: color }]}>
+        <View style={[styles.calendarTopIcon, { backgroundColor: color }]} />
+        <View style={styles.calendarDotsRow}>
+          <View style={[styles.calendarDotIcon, { backgroundColor: color }]} />
+          <View style={[styles.calendarDotIcon, { backgroundColor: color }]} />
+        </View>
+      </View>
+    );
+  }
+
+  if (tab === "Doctor") {
+    return (
+      <View style={styles.tabIconBox}>
+        <View style={[styles.doctorLensIcon, { borderColor: color }]} />
+        <View style={[styles.doctorHandleIcon, { backgroundColor: color }]} />
+      </View>
+    );
+  }
+
+  return (
+    <View style={styles.homeIcon}>
+      <View style={[styles.homeDotIcon, { backgroundColor: color }]} />
+      <View style={[styles.homeRingIcon, { borderColor: color }]} />
+    </View>
   );
 }
 
@@ -2918,10 +2979,11 @@ const styles = StyleSheet.create({
   },
   tabItem: {
     flex: 1,
-    minHeight: 48,
+    minHeight: 54,
     borderRadius: 7,
     alignItems: "center",
     justifyContent: "center",
+    gap: 3,
     paddingHorizontal: 4,
   },
   tabItemActive: {
@@ -2929,11 +2991,124 @@ const styles = StyleSheet.create({
   },
   tabText: {
     color: "#637068",
-    fontSize: 11,
+    fontSize: 10,
     fontWeight: "900",
     textAlign: "center",
   },
   tabTextActive: {
     color: "#ffffff",
+  },
+  tabIconBox: {
+    width: 24,
+    height: 22,
+    alignItems: "center",
+    justifyContent: "center",
+  },
+  farmRoof: {
+    width: 0,
+    height: 0,
+    borderLeftWidth: 9,
+    borderRightWidth: 9,
+    borderBottomWidth: 9,
+    borderLeftColor: "transparent",
+    borderRightColor: "transparent",
+  },
+  farmBase: {
+    width: 17,
+    height: 11,
+    borderWidth: 2,
+    borderTopWidth: 0,
+    borderBottomLeftRadius: 3,
+    borderBottomRightRadius: 3,
+  },
+  plantsPotIcon: {
+    position: "absolute",
+    bottom: 0,
+    width: 15,
+    height: 7,
+    borderWidth: 2,
+    borderTopWidth: 0,
+    borderBottomLeftRadius: 4,
+    borderBottomRightRadius: 4,
+  },
+  plantsStemIcon: {
+    position: "absolute",
+    width: 3,
+    height: 13,
+    borderRadius: 2,
+    bottom: 5,
+  },
+  plantsLeafIcon: {
+    position: "absolute",
+    width: 11,
+    height: 8,
+    borderTopLeftRadius: 9,
+    borderTopRightRadius: 9,
+    borderBottomLeftRadius: 1,
+    borderBottomRightRadius: 9,
+  },
+  plantsLeafLeftIcon: {
+    left: 4,
+    top: 4,
+    transform: [{ rotate: "-28deg" }],
+  },
+  plantsLeafRightIcon: {
+    right: 4,
+    top: 3,
+    transform: [{ rotate: "28deg" }],
+  },
+  calendarIcon: {
+    width: 21,
+    height: 21,
+    borderWidth: 2,
+    borderRadius: 4,
+    overflow: "hidden",
+  },
+  calendarTopIcon: {
+    height: 5,
+  },
+  calendarDotsRow: {
+    flexDirection: "row",
+    gap: 4,
+    justifyContent: "center",
+    marginTop: 4,
+  },
+  calendarDotIcon: {
+    width: 4,
+    height: 4,
+    borderRadius: 2,
+  },
+  doctorLensIcon: {
+    width: 15,
+    height: 15,
+    borderRadius: 8,
+    borderWidth: 2,
+  },
+  doctorHandleIcon: {
+    width: 9,
+    height: 3,
+    borderRadius: 2,
+    transform: [{ rotate: "45deg" }],
+    marginTop: -1,
+    marginLeft: 12,
+  },
+  homeIcon: {
+    width: 24,
+    height: 22,
+    alignItems: "center",
+    justifyContent: "center",
+  },
+  homeDotIcon: {
+    width: 7,
+    height: 7,
+    borderRadius: 4,
+    position: "absolute",
+  },
+  homeRingIcon: {
+    width: 20,
+    height: 20,
+    borderRadius: 10,
+    borderWidth: 2,
+    opacity: 0.75,
   },
 });
