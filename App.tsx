@@ -1,8 +1,9 @@
 import { StatusBar } from "expo-status-bar";
 import * as ImagePicker from "expo-image-picker";
 import * as ImageManipulator from "expo-image-manipulator";
+import AsyncStorage from "@react-native-async-storage/async-storage";
 import jpeg from "jpeg-js";
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import {
   Image,
   Platform,
@@ -36,6 +37,13 @@ type Diagnosis = {
   };
 };
 
+type ScanHistoryItem = {
+  id: string;
+  imageUri: string | null;
+  diagnosis: Diagnosis;
+  scannedAt: string;
+};
+
 type Plant = {
   id: string; //hi hello
   cropKey: CropKey;
@@ -53,6 +61,14 @@ type Plant = {
   energyToday: number;
   growthScore: number;
   history: number[];
+};
+
+type SavedPlantDoctorState = {
+  selectedPlantId: string;
+  plantRecords: Plant[];
+  sections: FarmSection[];
+  calendarItems: CalendarItem[];
+  scanHistory: ScanHistoryItem[];
 };
 
 type FarmSection = {
@@ -260,6 +276,74 @@ const waitingDiagnosis: Diagnosis = {
   isPlant: false,
   source: "Free offline AI",
 };
+
+const storageKey = "plantdoctor:v2";
+
+const demoScans: Array<{
+  label: string;
+  diagnosis: Diagnosis;
+}> = [
+  {
+    label: "Healthy basil",
+    diagnosis: {
+      title: "Healthy leaf growth",
+      confidence: 94,
+      color: "#2d7d4a",
+      symptoms:
+        "The demo scan shows strong green coverage with no obvious yellowing or dry edges.",
+      action:
+        "Maintain the current watering cycle, keep airflow steady, and rescan in one week.",
+      isPlant: true,
+      source: "Demo mode",
+      metrics: {
+        plantScore: 92,
+        greenRatio: 84,
+        yellowRatio: 5,
+        brownRatio: 2,
+      },
+    },
+  },
+  {
+    label: "Yellow stress",
+    diagnosis: {
+      title: "Possible nutrient stress",
+      confidence: 87,
+      color: "#d49a24",
+      symptoms:
+        "The demo scan shows yellow leaf areas that may point to chlorosis, low nitrogen, or light imbalance.",
+      action:
+        "Check nutrient strength, verify pH, trim badly affected leaves, and rescan after 3 days.",
+      isPlant: true,
+      source: "Demo mode",
+      metrics: {
+        plantScore: 73,
+        greenRatio: 57,
+        yellowRatio: 26,
+        brownRatio: 4,
+      },
+    },
+  },
+  {
+    label: "Dry edges",
+    diagnosis: {
+      title: "Possible dry edge burn",
+      confidence: 82,
+      color: "#c14f3d",
+      symptoms:
+        "The demo scan shows brown or dry regions that may be caused by heat stress, disease, or irregular watering.",
+      action:
+        "Remove damaged leaves, lower heat exposure, stabilize moisture, and rescan in 48 hours.",
+      isPlant: true,
+      source: "Demo mode",
+      metrics: {
+        plantScore: 68,
+        greenRatio: 52,
+        yellowRatio: 9,
+        brownRatio: 23,
+      },
+    },
+  },
+];
 
 const huggingFaceImageModel =
   getPublicEnv("EXPO_PUBLIC_HUGGINGFACE_MODEL") ??
@@ -940,6 +1024,100 @@ function shouldUseCameraPicker() {
   return Platform.OS !== "web";
 }
 
+function getScanStatus(diagnosis: Diagnosis) {
+  if (!diagnosis.isPlant) return "Not verified";
+  if (diagnosis.confidence >= 85) return "High confidence";
+  if (diagnosis.confidence >= 65) return "Medium confidence";
+  return "Needs clearer photo";
+}
+
+function getTreatmentSteps(diagnosis: Diagnosis) {
+  const title = diagnosis.title.toLowerCase();
+  const symptoms = diagnosis.symptoms.toLowerCase();
+
+  if (!diagnosis.isPlant) {
+    return [
+      "Retake the photo with one leaf filling most of the frame.",
+      "Avoid dark backgrounds, selfies, screenshots, and blurry photos.",
+      "Use a JPG or PNG image under bright natural light.",
+    ];
+  }
+
+  if (title.includes("healthy")) {
+    return [
+      "Continue the current watering and nutrient schedule.",
+      "Keep airflow stable around the plant canopy.",
+      "Scan again next week to compare leaf condition.",
+    ];
+  }
+
+  if (title.includes("yellow") || symptoms.includes("yellow")) {
+    return [
+      "Check nutrient level and pH before adding more fertilizer.",
+      "Remove badly yellowed leaves so the plant can focus on new growth.",
+      "Reduce intense light if yellowing appears near the leaf tips.",
+    ];
+  }
+
+  if (
+    title.includes("brown") ||
+    title.includes("dry") ||
+    symptoms.includes("brown") ||
+    symptoms.includes("dry")
+  ) {
+    return [
+      "Trim dry or infected leaf edges using clean scissors.",
+      "Stabilize watering so the tray does not swing between wet and dry.",
+      "Improve airflow and isolate the plant if spots continue spreading.",
+    ];
+  }
+
+  return [
+    "Inspect the underside of leaves for pests or spreading spots.",
+    "Keep the plant isolated from healthy trays until symptoms improve.",
+    "Repeat the scan after treatment to confirm recovery.",
+  ];
+}
+
+function getPreventionTips(diagnosis: Diagnosis) {
+  if (!diagnosis.isPlant) {
+    return [
+      "Use one clear plant photo per scan.",
+      "Capture leaves in daylight or bright white light.",
+    ];
+  }
+
+  return [
+    "Avoid overhead watering on leaves.",
+    "Clean tools before moving between plants.",
+    "Track pH, moisture, and light after every diagnosis.",
+  ];
+}
+
+function getRescanAdvice(diagnosis: Diagnosis) {
+  if (!diagnosis.isPlant) return "Retake now";
+  if (diagnosis.confidence < 65) return "Retake with clearer image";
+  if (diagnosis.title.toLowerCase().includes("healthy")) return "Scan again in 7 days";
+  return "Scan again in 2-3 days";
+}
+
+function createScanReport(item: ScanHistoryItem | null, scan: Diagnosis) {
+  const diagnosis = item?.diagnosis ?? scan;
+  const scannedAt = item
+    ? new Date(item.scannedAt).toLocaleString()
+    : "Current session";
+  return [
+    "PlantDoctor Health Report",
+    `Date: ${scannedAt}`,
+    `Status: ${diagnosis.title}`,
+    `Confidence: ${diagnosis.confidence}%`,
+    `Source: ${diagnosis.source ?? "Offline analysis"}`,
+    `Symptoms: ${diagnosis.symptoms}`,
+    `Recommended action: ${diagnosis.action}`,
+    `Next scan: ${getRescanAdvice(diagnosis)}`,
+  ].join("\n");
+}
+
 export default function App() {
   const [activeTab, setActiveTab] = useState<TabKey>("Home");
   const [selectedPlantId, setSelectedPlantId] = useState("p1");
@@ -958,8 +1136,64 @@ export default function App() {
   );
   const [leafImageUri, setLeafImageUri] = useState<string | null>(null);
   const [scan, setScan] = useState<Diagnosis>(waitingDiagnosis);
+  const [scanHistory, setScanHistory] = useState<ScanHistoryItem[]>([]);
   const [isScanning, setIsScanning] = useState(false);
+  const [hasLoadedSavedState, setHasLoadedSavedState] = useState(false);
   const [tick, setTick] = useState(2);
+
+  useEffect(() => {
+    async function loadSavedState() {
+      try {
+        const saved = await AsyncStorage.getItem(storageKey);
+        if (!saved) return;
+        const parsed = JSON.parse(saved) as Partial<SavedPlantDoctorState>;
+        if (parsed.plantRecords?.length) {
+          setPlantRecords(parsed.plantRecords);
+        }
+        if (parsed.sections?.length) {
+          setSections(parsed.sections);
+        }
+        if (parsed.calendarItems?.length) {
+          setCalendarItems(parsed.calendarItems);
+        }
+        if (parsed.selectedPlantId) {
+          setSelectedPlantId(parsed.selectedPlantId);
+        }
+        if (parsed.scanHistory?.length) {
+          setScanHistory(parsed.scanHistory.slice(0, 8));
+          setScan(parsed.scanHistory[0].diagnosis);
+          setLeafImageUri(parsed.scanHistory[0].imageUri);
+        }
+      } catch {
+        // The app can continue with starter data if saved JSON is unavailable.
+      } finally {
+        setHasLoadedSavedState(true);
+      }
+    }
+
+    loadSavedState();
+  }, []);
+
+  useEffect(() => {
+    if (!hasLoadedSavedState) return;
+    const savedState: SavedPlantDoctorState = {
+      selectedPlantId,
+      plantRecords,
+      sections,
+      calendarItems,
+      scanHistory,
+    };
+    AsyncStorage.setItem(storageKey, JSON.stringify(savedState)).catch(() => {
+      // Persistence failure should not block the hackathon demo flow.
+    });
+  }, [
+    calendarItems,
+    hasLoadedSavedState,
+    plantRecords,
+    scanHistory,
+    sections,
+    selectedPlantId,
+  ]);
 
   const plants = useMemo(() => {
     const wave = Math.sin(tick / 2);
@@ -1146,9 +1380,19 @@ export default function App() {
 
     setIsScanning(true);
     try {
-      setScan(await analyzeImageWithFreeAi(uri));
+      const diagnosis = await analyzeImageWithFreeAi(uri);
+      setScan(diagnosis);
+      setScanHistory((items) => [
+        {
+          id: `scan-${Date.now()}`,
+          imageUri: uri,
+          diagnosis,
+          scannedAt: new Date().toISOString(),
+        },
+        ...items,
+      ].slice(0, 8));
     } catch {
-      setScan({
+      const failedDiagnosis = {
         title: "Image could not be verified",
         confidence: 0,
         color: "#c14f3d",
@@ -1157,10 +1401,34 @@ export default function App() {
         action:
           "Try a JPG or PNG image, avoid screenshots from protected apps, and upload a clear leaf photo.",
         isPlant: false,
-      });
+      };
+      setScan(failedDiagnosis);
+      setScanHistory((items) => [
+        {
+          id: `scan-${Date.now()}`,
+          imageUri: uri,
+          diagnosis: failedDiagnosis,
+          scannedAt: new Date().toISOString(),
+        },
+        ...items,
+      ].slice(0, 8));
     } finally {
       setIsScanning(false);
     }
+  }
+
+  function runDemoScan(diagnosis: Diagnosis) {
+    setLeafImageUri(null);
+    setScan(diagnosis);
+    setScanHistory((items) => [
+      {
+        id: `demo-${Date.now()}`,
+        imageUri: null,
+        diagnosis,
+        scannedAt: new Date().toISOString(),
+      },
+      ...items,
+    ].slice(0, 8));
   }
 
   async function pickLeafImage() {
@@ -1293,10 +1561,12 @@ export default function App() {
           <DoctorPage
             imageUri={leafImageUri}
             scan={scan}
+            scanHistory={scanHistory}
             isScanning={isScanning}
             onPickImage={pickLeafImage}
             onTakePhoto={takeLeafPhoto}
             onRunScan={() => runPlantScan()}
+            onDemoScan={runDemoScan}
           />
         )}
       </ScrollView>
@@ -1308,6 +1578,7 @@ export default function App() {
             onPress={() => setActiveTab(tab)}
             style={[styles.tabItem, activeTab === tab && styles.tabItemActive]}
           >
+            <TabIcon tab={tab} active={activeTab === tab} />
             <Text
               style={[
                 styles.tabText,
@@ -1320,6 +1591,72 @@ export default function App() {
         ))}
       </View>
     </SafeAreaView>
+  );
+}
+
+function TabIcon({ tab, active }: { tab: TabKey; active: boolean }) {
+  const iconColor = active ? "#ffffff" : "#76827a";
+
+  if (tab === "Home") {
+    return (
+      <View style={styles.tabIconBox}>
+        <View
+          style={[
+            styles.homeRoof,
+            { borderBottomColor: iconColor },
+          ]}
+        />
+        <View style={[styles.homeBase, { backgroundColor: iconColor }]} />
+      </View>
+    );
+  }
+
+  if (tab === "My Farm") {
+    return (
+      <View style={styles.tabIconBox}>
+        <View style={[styles.farmLine, { backgroundColor: iconColor }]} />
+        <View style={styles.farmRack}>
+          <View style={[styles.farmTray, { backgroundColor: iconColor }]} />
+          <View style={[styles.farmTray, { backgroundColor: iconColor }]} />
+        </View>
+      </View>
+    );
+  }
+
+  if (tab === "My Plants") {
+    return (
+      <View style={styles.tabIconBox}>
+        <View style={[styles.plantStemIcon, { backgroundColor: iconColor }]} />
+        <View style={[styles.plantLeafIcon, { backgroundColor: iconColor }]} />
+        <View
+          style={[
+            styles.plantLeafIcon,
+            styles.plantLeafIconRight,
+            { backgroundColor: iconColor },
+          ]}
+        />
+      </View>
+    );
+  }
+
+  if (tab === "Calendar") {
+    return (
+      <View style={[styles.calendarIcon, { borderColor: iconColor }]}>
+        <View style={[styles.calendarTop, { backgroundColor: iconColor }]} />
+        <View style={styles.calendarDots}>
+          <View style={[styles.calendarDot, { backgroundColor: iconColor }]} />
+          <View style={[styles.calendarDot, { backgroundColor: iconColor }]} />
+          <View style={[styles.calendarDot, { backgroundColor: iconColor }]} />
+        </View>
+      </View>
+    );
+  }
+
+  return (
+    <View style={[styles.doctorIcon, { borderColor: iconColor }]}>
+      <View style={[styles.doctorCrossVertical, { backgroundColor: iconColor }]} />
+      <View style={[styles.doctorCrossHorizontal, { backgroundColor: iconColor }]} />
+    </View>
   );
 }
 
@@ -1568,7 +1905,7 @@ function MyPlantsPage({
 
       <View style={styles.sectionCard}>
         <View style={styles.cardHeader}>
-          <View>
+          <View style={styles.cardHeaderText}>
             <Text style={styles.cardTitle}>{selectedPlant.name}</Text>
             <Text style={styles.bodyText}>
               {selectedPlant.variety} - planted {selectedPlant.plantedDate}
@@ -1818,11 +2155,11 @@ function CalendarPage({
 function GrowMindLogo() {
   return (
     <View style={styles.logoLockup}>
-      <View style={styles.logoMark}>
-        <View style={[styles.logoLeaf, styles.logoLeafLeft]} />
-        <View style={[styles.logoLeaf, styles.logoLeafRight]} />
-        <View style={styles.logoStem} />
-      </View>
+      <Image
+        source={require("./assets/plantdoctor-icon.png")}
+        style={styles.logoImage}
+        resizeMode="cover"
+      />
       <View>
         <View style={styles.logoWordRow}>
           <Text style={styles.logoWordGrow}>Plant</Text>
@@ -1837,18 +2174,27 @@ function GrowMindLogo() {
 function DoctorPage({
   imageUri,
   scan,
+  scanHistory,
   isScanning,
   onPickImage,
   onTakePhoto,
   onRunScan,
+  onDemoScan,
 }: {
   imageUri: string | null;
   scan: Diagnosis;
+  scanHistory: ScanHistoryItem[];
   isScanning: boolean;
   onPickImage: () => void;
   onTakePhoto: () => void;
   onRunScan: () => void;
+  onDemoScan: (diagnosis: Diagnosis) => void;
 }) {
+  const latestHistory = scanHistory[0] ?? null;
+  const report = createScanReport(latestHistory, scan);
+  const treatmentSteps = getTreatmentSteps(scan);
+  const preventionTips = getPreventionTips(scan);
+
   return (
     <>
       <PageIntro
@@ -1888,20 +2234,36 @@ function DoctorPage({
             <Text style={styles.scanButtonText}>Scan</Text>
           </Pressable>
         </View>
+        <View style={styles.demoRow}>
+          {demoScans.map((demo) => (
+            <Pressable
+              key={demo.label}
+              onPress={() => onDemoScan(demo.diagnosis)}
+              style={styles.demoButton}
+            >
+              <Text style={styles.demoButtonText}>{demo.label}</Text>
+            </Pressable>
+          ))}
+        </View>
       </View>
 
       <SectionTitle
         title="Diagnosis"
-        action={
-          isScanning ? "Scanning image" : `${scan.confidence}% confidence`
-        }
+        action={isScanning ? "Scanning image" : getScanStatus(scan)}
       />
       <View style={styles.diagnosisCard}>
         <View
           style={[styles.diagnosisStrip, { backgroundColor: scan.color }]}
         />
         <View style={styles.diagnosisBody}>
-          <Text style={styles.diagnosisTitle}>{scan.title}</Text>
+          <View style={styles.diagnosisHeader}>
+            <Text style={styles.diagnosisTitle}>{scan.title}</Text>
+            <View style={[styles.confidenceBadge, { borderColor: scan.color }]}>
+              <Text style={[styles.confidenceText, { color: scan.color }]}>
+                {scan.confidence}%
+              </Text>
+            </View>
+          </View>
           <Text style={styles.bodyText}>{scan.symptoms}</Text>
           <Text style={styles.recommendationText}>{scan.action}</Text>
           {scan.metrics && (
@@ -1921,6 +2283,64 @@ function DoctorPage({
             <Text style={styles.metricText}>API error: {scan.aiError}</Text>
           )}
         </View>
+      </View>
+
+      <SectionTitle title="Care Plan" action={getRescanAdvice(scan)} />
+      <View style={styles.careGrid}>
+        <View style={styles.careCard}>
+          <Text style={styles.cardTitle}>Treatment steps</Text>
+          {treatmentSteps.map((step, index) => (
+            <Text key={step} style={styles.careText}>
+              {index + 1}. {step}
+            </Text>
+          ))}
+        </View>
+        <View style={styles.careCard}>
+          <Text style={styles.cardTitle}>Prevention</Text>
+          {preventionTips.map((tip) => (
+            <Text key={tip} style={styles.careText}>
+              - {tip}
+            </Text>
+          ))}
+        </View>
+      </View>
+
+      <SectionTitle title="Scan History" action={`${scanHistory.length} saved`} />
+      <View style={styles.historyList}>
+        {scanHistory.length === 0 ? (
+          <Text style={styles.bodyText}>
+            No scans saved yet. Upload a plant image or run demo mode to create
+            a history record.
+          </Text>
+        ) : (
+          scanHistory.map((item) => (
+            <View key={item.id} style={styles.historyItem}>
+              {item.imageUri ? (
+                <Image
+                  source={{ uri: item.imageUri }}
+                  style={styles.historyImage}
+                  resizeMode="cover"
+                />
+              ) : (
+                <View style={styles.historyDemoImage}>
+                  <View style={styles.historyDemoLeaf} />
+                </View>
+              )}
+              <View style={styles.historyTextWrap}>
+                <Text style={styles.historyTitle}>{item.diagnosis.title}</Text>
+                <Text style={styles.metricText}>
+                  {new Date(item.scannedAt).toLocaleString()} |{" "}
+                  {item.diagnosis.confidence}% confidence
+                </Text>
+              </View>
+            </View>
+          ))
+        )}
+      </View>
+
+      <SectionTitle title="Report" action="Demo ready" />
+      <View style={styles.reportCard}>
+        <Text style={styles.reportText}>{report}</Text>
       </View>
     </>
   );
@@ -2106,42 +2526,11 @@ const styles = StyleSheet.create({
     gap: 10,
     flexShrink: 1,
   },
-  logoMark: {
-    width: 42,
-    height: 42,
-    borderRadius: 8,
-    backgroundColor: "#173e2b",
-    alignItems: "center",
-    justifyContent: "center",
+  logoImage: {
+    width: 50,
+    height: 50,
+    borderRadius: 10,
     overflow: "hidden",
-  },
-  logoLeaf: {
-    position: "absolute",
-    width: 18,
-    height: 26,
-    borderTopLeftRadius: 18,
-    borderTopRightRadius: 18,
-    borderBottomLeftRadius: 3,
-    borderBottomRightRadius: 18,
-  },
-  logoLeafLeft: {
-    backgroundColor: "#82c46c",
-    left: 9,
-    top: 8,
-    transform: [{ rotate: "-36deg" }],
-  },
-  logoLeafRight: {
-    backgroundColor: "#d9f2a3",
-    right: 8,
-    top: 11,
-    transform: [{ rotate: "38deg" }],
-  },
-  logoStem: {
-    width: 3,
-    height: 25,
-    borderRadius: 2,
-    backgroundColor: "#f5ffe4",
-    transform: [{ rotate: "34deg" }],
   },
   logoWordRow: {
     flexDirection: "row",
@@ -2226,21 +2615,23 @@ const styles = StyleSheet.create({
     flexDirection: "row",
     alignItems: "flex-start",
     justifyContent: "space-between",
+    flexWrap: "wrap",
     gap: 12,
   },
   homeMood: {
     color: "#143523",
     flex: 1,
     flexShrink: 1,
-    fontSize: 28,
+    minWidth: 0,
+    fontSize: 25,
     fontWeight: "900",
-    lineHeight: 33,
+    lineHeight: 30,
   },
   scoreBubble: {
     flexShrink: 0,
-    width: 82,
-    height: 82,
-    borderRadius: 41,
+    width: 74,
+    height: 74,
+    borderRadius: 37,
     backgroundColor: "#ffffff",
     alignItems: "center",
     justifyContent: "center",
@@ -2249,7 +2640,7 @@ const styles = StyleSheet.create({
   },
   scoreBubbleValue: {
     color: "#214b35",
-    fontSize: 30,
+    fontSize: 27,
     fontWeight: "900",
   },
   scoreBubbleLabel: {
@@ -2389,7 +2780,12 @@ const styles = StyleSheet.create({
     flexDirection: "row",
     alignItems: "center",
     justifyContent: "space-between",
+    flexWrap: "wrap",
     gap: 12,
+  },
+  cardHeaderText: {
+    flex: 1,
+    minWidth: 0,
   },
   cardTitle: {
     color: "#17251d",
@@ -2786,6 +3182,8 @@ const styles = StyleSheet.create({
     paddingHorizontal: 12,
     paddingVertical: 9,
     alignItems: "center",
+    flexShrink: 0,
+    maxWidth: "100%",
   },
   smallButtonText: {
     color: "#235b37",
@@ -2858,6 +3256,29 @@ const styles = StyleSheet.create({
     gap: 8,
     marginTop: 14,
   },
+  demoRow: {
+    flexDirection: "row",
+    flexWrap: "wrap",
+    gap: 8,
+    marginTop: 10,
+  },
+  demoButton: {
+    flexGrow: 1,
+    minWidth: "31%",
+    backgroundColor: "#eef7f1",
+    borderColor: "#c9dfcf",
+    borderWidth: 1,
+    borderRadius: 8,
+    paddingVertical: 10,
+    paddingHorizontal: 8,
+    alignItems: "center",
+  },
+  demoButtonText: {
+    color: "#245038",
+    fontSize: 11,
+    fontWeight: "900",
+    textAlign: "center",
+  },
   scanButton: {
     backgroundColor: "#214b35",
     borderRadius: 8,
@@ -2890,9 +3311,28 @@ const styles = StyleSheet.create({
     padding: 16,
     gap: 10,
   },
+  diagnosisHeader: {
+    flexDirection: "row",
+    alignItems: "flex-start",
+    justifyContent: "space-between",
+    gap: 12,
+  },
   diagnosisTitle: {
+    flex: 1,
     color: "#17251d",
     fontSize: 20,
+    fontWeight: "900",
+  },
+  confidenceBadge: {
+    minWidth: 62,
+    borderRadius: 8,
+    borderWidth: 1,
+    paddingHorizontal: 10,
+    paddingVertical: 8,
+    alignItems: "center",
+  },
+  confidenceText: {
+    fontSize: 17,
     fontWeight: "900",
   },
   recommendationText: {
@@ -2900,6 +3340,79 @@ const styles = StyleSheet.create({
     lineHeight: 21,
     fontSize: 14,
     fontWeight: "800",
+  },
+  careGrid: {
+    gap: 10,
+  },
+  careCard: {
+    backgroundColor: "#ffffff",
+    borderRadius: 8,
+    borderWidth: 1,
+    borderColor: "#dce5dc",
+    padding: 14,
+    gap: 8,
+  },
+  careText: {
+    color: "#4f5f55",
+    fontSize: 13,
+    lineHeight: 19,
+    fontWeight: "700",
+  },
+  historyList: {
+    backgroundColor: "#ffffff",
+    borderRadius: 8,
+    borderWidth: 1,
+    borderColor: "#dce5dc",
+    padding: 12,
+    gap: 10,
+  },
+  historyItem: {
+    flexDirection: "row",
+    gap: 12,
+    alignItems: "center",
+    borderBottomWidth: 1,
+    borderBottomColor: "#eef2ef",
+    paddingBottom: 10,
+  },
+  historyImage: {
+    width: 58,
+    height: 58,
+    borderRadius: 8,
+    backgroundColor: "#dce5dc",
+  },
+  historyDemoImage: {
+    width: 58,
+    height: 58,
+    borderRadius: 8,
+    backgroundColor: "#e8f2eb",
+    alignItems: "center",
+    justifyContent: "center",
+  },
+  historyDemoLeaf: {
+    width: 28,
+    height: 42,
+    borderRadius: 14,
+    backgroundColor: "#65a871",
+    transform: [{ rotate: "-18deg" }],
+  },
+  historyTextWrap: {
+    flex: 1,
+  },
+  historyTitle: {
+    color: "#17251d",
+    fontSize: 14,
+    fontWeight: "900",
+  },
+  reportCard: {
+    backgroundColor: "#17251d",
+    borderRadius: 8,
+    padding: 14,
+  },
+  reportText: {
+    color: "#ecf5ed",
+    fontFamily: Platform.select({ ios: "Courier", default: "monospace" }),
+    fontSize: 12,
+    lineHeight: 18,
   },
   tabBar: {
     position: "absolute",
@@ -2918,19 +3431,119 @@ const styles = StyleSheet.create({
   },
   tabItem: {
     flex: 1,
-    minHeight: 48,
+    minHeight: 56,
     borderRadius: 7,
     alignItems: "center",
     justifyContent: "center",
     paddingHorizontal: 4,
+    gap: 3,
   },
   tabItemActive: {
     backgroundColor: "#214b35",
   },
+  tabIconBox: {
+    width: 24,
+    height: 22,
+    alignItems: "center",
+    justifyContent: "center",
+  },
+  homeRoof: {
+    width: 0,
+    height: 0,
+    borderLeftWidth: 9,
+    borderRightWidth: 9,
+    borderBottomWidth: 8,
+    borderLeftColor: "transparent",
+    borderRightColor: "transparent",
+  },
+  homeBase: {
+    width: 15,
+    height: 10,
+    borderRadius: 2,
+  },
+  farmLine: {
+    width: 20,
+    height: 3,
+    borderRadius: 2,
+    marginBottom: 3,
+  },
+  farmRack: {
+    width: 22,
+    gap: 3,
+  },
+  farmTray: {
+    height: 4,
+    borderRadius: 2,
+  },
+  plantStemIcon: {
+    width: 3,
+    height: 18,
+    borderRadius: 2,
+    position: "absolute",
+    bottom: 1,
+  },
+  plantLeafIcon: {
+    width: 13,
+    height: 9,
+    borderTopLeftRadius: 8,
+    borderTopRightRadius: 8,
+    borderBottomLeftRadius: 8,
+    borderBottomRightRadius: 2,
+    position: "absolute",
+    left: 3,
+    top: 5,
+    transform: [{ rotate: "-28deg" }],
+  },
+  plantLeafIconRight: {
+    left: 10,
+    top: 3,
+    transform: [{ rotate: "28deg" }],
+  },
+  calendarIcon: {
+    width: 22,
+    height: 20,
+    borderRadius: 4,
+    borderWidth: 2,
+    overflow: "hidden",
+  },
+  calendarTop: {
+    height: 5,
+  },
+  calendarDots: {
+    flexDirection: "row",
+    justifyContent: "center",
+    gap: 3,
+    paddingTop: 4,
+  },
+  calendarDot: {
+    width: 3,
+    height: 3,
+    borderRadius: 2,
+  },
+  doctorIcon: {
+    width: 22,
+    height: 22,
+    borderRadius: 6,
+    borderWidth: 2,
+    alignItems: "center",
+    justifyContent: "center",
+  },
+  doctorCrossVertical: {
+    position: "absolute",
+    width: 4,
+    height: 13,
+    borderRadius: 2,
+  },
+  doctorCrossHorizontal: {
+    position: "absolute",
+    width: 13,
+    height: 4,
+    borderRadius: 2,
+  },
   tabText: {
-    color: "#637068",
-    fontSize: 11,
-    fontWeight: "900",
+    color: "#7a867e",
+    fontSize: 10,
+    fontWeight: "700",
     textAlign: "center",
   },
   tabTextActive: {
