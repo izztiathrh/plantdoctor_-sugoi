@@ -17,35 +17,11 @@ import {
 } from "react-native";
 
 type TabKey = "My Farm" | "My Plants" | "Home" | "Calendar" | "Doctor";
+
 type CropKey = "lettuce" | "basil" | "strawberry" | "spinach";
 
-type Diagnosis = {
-  title: string;
-  confidence: number;
-  color: string;
-  symptoms: string;
-  action: string;
-  isPlant: boolean;
-  source?: string;
-  aiLabel?: string;
-  aiError?: string;
-  metrics?: {
-    plantScore: number;
-    greenRatio: number;
-    yellowRatio: number;
-    brownRatio: number;
-  };
-};
-
-type ScanHistoryItem = {
-  id: string;
-  imageUri: string | null;
-  diagnosis: Diagnosis;
-  scannedAt: string;
-};
-
 type Plant = {
-  id: string; //hi hello
+  id: string;
   cropKey: CropKey;
   name: string;
   section: string;
@@ -61,14 +37,6 @@ type Plant = {
   energyToday: number;
   growthScore: number;
   history: number[];
-};
-
-type SavedPlantDoctorState = {
-  selectedPlantId: string;
-  plantRecords: Plant[];
-  sections: FarmSection[];
-  calendarItems: CalendarItem[];
-  scanHistory: ScanHistoryItem[];
 };
 
 type FarmSection = {
@@ -90,6 +58,341 @@ type CalendarItem = {
   plantedDate: string;
   harvestDate: string;
 };
+
+type DiagnosisMetrics = {
+  plantScore: number;
+  greenRatio: number;
+  yellowRatio: number;
+  brownRatio: number;
+};
+
+type Diagnosis = {
+  title: string;
+  confidence: number;
+  color: string;
+  symptoms: string;
+  action: string;
+  isPlant: boolean;
+  source?: string;
+  aiLabel?: string;
+  aiError?: string;
+  metrics?: DiagnosisMetrics;
+};
+
+type ScanHistoryItem = {
+  id: string;
+  imageUri: string | null;
+  diagnosis: Diagnosis;
+  scannedAt: string;
+};
+
+type SavedPlantDoctorState = {
+  selectedPlantId: string;
+  plantRecords: Plant[];
+  sections: FarmSection[];
+  calendarItems: CalendarItem[];
+  scanHistory: ScanHistoryItem[];
+};
+
+type UserRecord = {
+  username: string;
+  password: string;
+  fullName: string;
+  phone?: string;
+  email?: string;
+};
+
+function LoginScreen({
+  onLogin,
+  onSignUp,
+  onResetPassword,
+}: {
+  onLogin: (username: string, password: string) => Promise<{ ok: boolean; message?: string }>;
+  onSignUp: (username: string, password: string, fullName: string, phone?: string, email?: string) => Promise<{ ok: boolean; message?: string }>;
+  onResetPassword: (username: string, newPassword: string) => Promise<{ ok: boolean; message?: string }>;
+}) {
+  const [mode, setMode] = useState<"signIn" | "signUp" | "forgot">("signIn");
+  const [username, setUsername] = useState("demo");
+  const [password, setPassword] = useState("");
+  const [fullName, setFullName] = useState("");
+  const [phone, setPhone] = useState("");
+  const [email, setEmail] = useState("");
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+  const [resetMessage, setResetMessage] = useState<string | null>(null);
+
+  async function submitSignIn() {
+    setError(null);
+    setLoading(true);
+    try {
+      const result = await onLogin(username.trim(), password);
+      if (!result.ok) setError(result.message ?? "Sign in failed");
+    } catch {
+      setError("Sign in failed");
+    } finally {
+      setLoading(false);
+    }
+  }
+
+  async function submitSignUp() {
+    setError(null);
+    setLoading(true);
+    try {
+      const result = await onSignUp(
+        username.trim(),
+        password,
+        fullName.trim(),
+        phone.trim() || undefined,
+        email.trim() || undefined,
+      );
+      if (!result.ok) setError(result.message ?? "Sign up failed");
+    } catch {
+      setError("Sign up failed");
+    } finally {
+      setLoading(false);
+    }
+  }
+
+  async function submitReset() {
+    setError(null);
+    setResetMessage(null);
+    setLoading(true);
+    try {
+      const newPass = "newpass123";
+      const result = await onResetPassword(username.trim(), newPass);
+      if (!result.ok) setError(result.message ?? "Reset failed");
+      else setResetMessage(`Password reset. New password: ${newPass}`);
+    } catch {
+      setError("Reset failed");
+    } finally {
+      setLoading(false);
+    }
+  }
+
+  return (
+    <View style={{ width: "100%", maxWidth: 520, alignSelf: "center" }}>
+      <View style={{ alignItems: "center", marginBottom: 12 }}>
+        <Image
+          source={require("./assets/plantdoctor-icon.png")}
+          style={styles.loginLogo}
+          resizeMode="cover"
+        />
+      </View>
+
+      <View style={styles.pageIntro}>
+        <Text style={styles.pageTitle}>{mode === "signIn" ? "Sign in to Plant Doctor" : mode === "signUp" ? "Create your account" : "Reset password"}</Text>
+        <Text style={styles.bodyText}>{mode === "signIn" ? "Enter your credentials to continue." : mode === "signUp" ? "Provide basic information to create an account." : "Enter your username to reset password."}</Text>
+      </View>
+
+      <View style={styles.formCard}>
+        <View style={{ flexDirection: "row", gap: 8, marginBottom: 8 }}>
+          <Pressable onPress={() => setMode("signIn")} style={[{ padding: 8, borderRadius: 8 }, mode === "signIn" && { backgroundColor: "#eef7f1" }]}>
+            <Text style={{ fontWeight: "900", color: mode === "signIn" ? "#214b35" : "#58645d" }}>Sign in</Text>
+          </Pressable>
+          <Pressable onPress={() => setMode("signUp")} style={[{ padding: 8, borderRadius: 8 }, mode === "signUp" && { backgroundColor: "#eef7f1" }]}>
+            <Text style={{ fontWeight: "900", color: mode === "signUp" ? "#214b35" : "#58645d" }}>Sign up</Text>
+          </Pressable>
+          <Pressable onPress={() => setMode("forgot")} style={[{ padding: 8, borderRadius: 8 }, mode === "forgot" && { backgroundColor: "#eef7f1" }]}>
+            <Text style={{ fontWeight: "900", color: mode === "forgot" ? "#214b35" : "#58645d" }}>Forgot</Text>
+          </Pressable>
+        </View>
+
+        {(mode === "signIn" || mode === "signUp" || mode === "forgot") && (
+          <>
+            <Text style={{ fontWeight: "900", marginBottom: 6 }}>Username</Text>
+            <TextInput value={username} onChangeText={setUsername} placeholder="username" style={styles.input} autoCapitalize="none" />
+          </>
+        )}
+
+        {mode !== "forgot" && (
+          <>
+            <Text style={{ fontWeight: "900", marginTop: 12, marginBottom: 6 }}>Password</Text>
+            <TextInput value={password} onChangeText={setPassword} placeholder="••••••••" secureTextEntry style={styles.input} />
+          </>
+        )}
+
+        {mode === "signUp" && (
+          <>
+            <Text style={{ fontWeight: "900", marginBottom: 6 }}>Full name</Text>
+            <TextInput value={fullName} onChangeText={setFullName} placeholder="Your full name" style={styles.input} />
+
+            <Text style={{ fontWeight: "900", marginTop: 12, marginBottom: 6 }}>Email (optional)</Text>
+            <TextInput value={email} onChangeText={setEmail} placeholder="you@example.com" style={styles.input} keyboardType="email-address" />
+
+            <Text style={{ fontWeight: "900", marginTop: 12, marginBottom: 6 }}>Phone number (optional)</Text>
+            <TextInput value={phone} onChangeText={setPhone} placeholder="09xx xxx xxxx" style={styles.input} keyboardType="phone-pad" />
+          </>
+        )}
+
+        {error && <Text style={{ color: "#c14f3d", marginTop: 8, fontWeight: "800" }}>{error}</Text>}
+        {resetMessage && <Text style={{ color: "#2d7d4a", marginTop: 8, fontWeight: "800" }}>{resetMessage}</Text>}
+
+        {mode === "signIn" && (
+          <>
+            <Pressable onPress={submitSignIn} style={[styles.primaryButton, { marginTop: 14, opacity: loading ? 0.7 : 1 }]} disabled={loading}>
+              <Text style={styles.primaryButtonText}>{loading ? "Signing in..." : "Sign in"}</Text>
+            </Pressable>
+            <Text style={{ marginTop: 10, color: "#58645d", fontSize: 13 }}>Demo credentials: username "demo" and password "demo123".</Text>
+          </>
+        )}
+
+        {mode === "signUp" && (
+          <Pressable onPress={submitSignUp} style={[styles.primaryButton, { marginTop: 14, opacity: loading ? 0.7 : 1 }]} disabled={loading}>
+            <Text style={styles.primaryButtonText}>{loading ? "Creating..." : "Create account"}</Text>
+          </Pressable>
+        )}
+
+        {mode === "forgot" && (
+          <Pressable onPress={submitReset} style={[styles.primaryButton, { marginTop: 14, opacity: loading ? 0.7 : 1 }]} disabled={loading}>
+            <Text style={styles.primaryButtonText}>{loading ? "Resetting..." : "Reset password"}</Text>
+          </Pressable>
+        )}
+      </View>
+    </View>
+  );
+}
+
+function ProfileScreen({
+  username,
+  onClose,
+  onSignOut,
+}: {
+  username: string | null;
+  onClose: () => void;
+  onSignOut: () => void;
+}) {
+  const [userRecord, setUserRecord] = useState<UserRecord | null>(null);
+  const [changePasswordOpen, setChangePasswordOpen] = useState(false);
+  const [newPassword, setNewPassword] = useState("");
+  const [confirmPassword, setConfirmPassword] = useState("");
+  const [passwordMessage, setPasswordMessage] = useState<string | null>(null);
+  const [passwordError, setPasswordError] = useState<string | null>(null);
+
+  useEffect(() => {
+    async function load() {
+      if (!username) return;
+      try {
+        const raw = await AsyncStorage.getItem("plantdoctor:users");
+        const users = raw ? (JSON.parse(raw) as Record<string, UserRecord>) : {};
+        const record = users[username];
+        if (record) setUserRecord(record);
+        else setUserRecord({ username, password: "", fullName: username, email: undefined, phone: undefined });
+      } catch {
+        setUserRecord({ username, password: "", fullName: username, email: undefined, phone: undefined });
+      }
+    }
+
+    load();
+  }, [username]);
+
+  async function submitPasswordChange() {
+    setPasswordError(null);
+    setPasswordMessage(null);
+
+    if (!username) {
+      setPasswordError("No user is signed in");
+      return;
+    }
+
+    if (!newPassword.trim()) {
+      setPasswordError("Enter a new password");
+      return;
+    }
+
+    if (newPassword !== confirmPassword) {
+      setPasswordError("Passwords do not match");
+      return;
+    }
+
+    try {
+      const raw = await AsyncStorage.getItem("plantdoctor:users");
+      const users = raw ? (JSON.parse(raw) as Record<string, UserRecord>) : {};
+      const record = users[username];
+      if (!record) {
+        setPasswordError("User not found");
+        return;
+      }
+
+      users[username] = { ...record, password: newPassword };
+      await AsyncStorage.setItem("plantdoctor:users", JSON.stringify(users));
+      setPasswordMessage("Password updated successfully");
+      setNewPassword("");
+      setConfirmPassword("");
+      setChangePasswordOpen(false);
+    } catch {
+      setPasswordError("Could not update password");
+    }
+  }
+
+  return (
+    <View>
+      <View style={styles.pageIntro}>
+        <Text style={styles.pageTitle}>Profile</Text>
+        <Text style={styles.bodyText}>Account details for {userRecord?.username ?? "user"}.</Text>
+      </View>
+
+      <View style={styles.formCard}>
+        <View style={{ flexDirection: "row", alignItems: "center", gap: 12 }}>
+          <View style={[styles.loginLogo, { width: 64, height: 64, borderRadius: 12, alignItems: "center", justifyContent: "center" }]}>
+            <Text style={{ fontSize: 28, fontWeight: "900", color: "#214b35" }}>{userRecord?.fullName ? userRecord.fullName[0].toUpperCase() : username ? username[0].toUpperCase() : "U"}</Text>
+          </View>
+          <View style={{ flex: 1 }}>
+            <Text style={styles.cardTitle}>{userRecord?.fullName ?? "User"}</Text>
+            <Text style={styles.bodyText}>Username: {userRecord?.username ?? username ?? "-"}</Text>
+          </View>
+        </View>
+
+        <View style={{ marginTop: 16, gap: 8 }}>
+          <Text style={styles.bodyText}>Full name: {userRecord?.fullName ?? "Not provided"}</Text>
+          <Text style={styles.bodyText}>Username: {userRecord?.username ?? "Not provided"}</Text>
+          <Text style={styles.bodyText}>Phone number: {userRecord?.phone ?? "Not provided"}</Text>
+          <Text style={styles.bodyText}>Email: {userRecord?.email ?? "No email provided"}</Text>
+        </View>
+
+        <Pressable onPress={() => setChangePasswordOpen((current) => !current)} style={[styles.smallButton, { marginTop: 16 }]}>
+          <Text style={styles.smallButtonText}>{changePasswordOpen ? "Cancel password change" : "Change password"}</Text>
+        </Pressable>
+
+        {changePasswordOpen && (
+          <View style={{ marginTop: 12 }}>
+            <Text style={{ fontWeight: "900", marginBottom: 6 }}>New password</Text>
+            <TextInput
+              value={newPassword}
+              onChangeText={setNewPassword}
+              placeholder="Enter new password"
+              secureTextEntry
+              style={styles.input}
+            />
+
+            <Text style={{ fontWeight: "900", marginTop: 12, marginBottom: 6 }}>Confirm password</Text>
+            <TextInput
+              value={confirmPassword}
+              onChangeText={setConfirmPassword}
+              placeholder="Confirm new password"
+              secureTextEntry
+              style={styles.input}
+            />
+
+            {passwordError && <Text style={{ color: "#c14f3d", marginTop: 8, fontWeight: "800" }}>{passwordError}</Text>}
+            {passwordMessage && <Text style={{ color: "#2d7d4a", marginTop: 8, fontWeight: "800" }}>{passwordMessage}</Text>}
+
+            <Pressable onPress={submitPasswordChange} style={[styles.primaryButton, { marginTop: 14 }]}>
+              <Text style={styles.primaryButtonText}>Save password</Text>
+            </Pressable>
+          </View>
+        )}
+
+        <Pressable onPress={onSignOut} style={[styles.primaryButton, { marginTop: 16 }]}>
+          <Text style={styles.primaryButtonText}>Sign out</Text>
+        </Pressable>
+
+        <Pressable onPress={onClose} style={[styles.smallButton, { marginTop: 8 }]}>
+          <Text style={styles.smallButtonText}>Back</Text>
+        </Pressable>
+      </View>
+    </View>
+  );
+}
 
 const tabs: TabKey[] = ["My Farm", "My Plants", "Home", "Calendar", "Doctor"];
 
@@ -1120,6 +1423,9 @@ function createScanReport(item: ScanHistoryItem | null, scan: Diagnosis) {
 
 export default function App() {
   const [activeTab, setActiveTab] = useState<TabKey>("Home");
+  const [isAuthenticated, setIsAuthenticated] = useState(false);
+  const [authUser, setAuthUser] = useState<string | null>(null);
+  const [isProfileOpen, setIsProfileOpen] = useState(false);
   const [selectedPlantId, setSelectedPlantId] = useState("p1");
   const [plantRecords, setPlantRecords] = useState(initialPlants);
   const [sections, setSections] = useState(initialSections);
@@ -1175,6 +1481,22 @@ export default function App() {
   }, []);
 
   useEffect(() => {
+    async function loadAuth() {
+      try {
+        const token = await AsyncStorage.getItem("plantdoctor:auth");
+        if (token) {
+          setAuthUser(token);
+          setIsAuthenticated(true);
+        }
+      } catch {
+        // ignore
+      }
+    }
+
+    loadAuth();
+  }, []);
+
+  useEffect(() => {
     if (!hasLoadedSavedState) return;
     const savedState: SavedPlantDoctorState = {
       selectedPlantId,
@@ -1194,6 +1516,85 @@ export default function App() {
     sections,
     selectedPlantId,
   ]);
+
+  async function loadUsers(): Promise<Record<string, UserRecord>> {
+    try {
+      const raw = await AsyncStorage.getItem("plantdoctor:users");
+      if (!raw) return {};
+      return JSON.parse(raw) as Record<string, UserRecord>;
+    } catch {
+      return {};
+    }
+  }
+
+  async function saveUsers(users: Record<string, UserRecord>) {
+    try {
+      await AsyncStorage.setItem("plantdoctor:users", JSON.stringify(users));
+    } catch {
+      // ignore
+    }
+  }
+
+  async function handleLogin(username: string, password: string) {
+    const users = await loadUsers();
+
+    // Allow built-in demo credentials when no users saved
+    if (username === "demo" && password === "demo123") {
+      try {
+        await AsyncStorage.setItem("plantdoctor:auth", username);
+      } catch {}
+      setAuthUser(username);
+      setIsAuthenticated(true);
+      return { ok: true };
+    }
+
+    const user = users[username];
+    if (user && user.password === password) {
+      try {
+        await AsyncStorage.setItem("plantdoctor:auth", username);
+      } catch {}
+      setAuthUser(username);
+      setIsAuthenticated(true);
+      return { ok: true };
+    }
+
+    return { ok: false, message: "Invalid username or password" };
+  }
+
+  async function handleSignUp(username: string, password: string, fullName: string, phone?: string, email?: string) {
+    if (!username || !password || !fullName) return { ok: false, message: "Full name, username and password required" };
+    const users = await loadUsers();
+    if (users[username]) return { ok: false, message: "Username already exists" };
+    users[username] = { username, password, fullName, phone, email };
+    await saveUsers(users);
+    try {
+      await AsyncStorage.setItem("plantdoctor:auth", username);
+    } catch {}
+    setAuthUser(username);
+    setIsAuthenticated(true);
+    return { ok: true };
+  }
+
+  async function handleResetPassword(username: string, newPassword: string) {
+    const users = await loadUsers();
+    const user = users[username];
+    if (!user) return { ok: false, message: "User not found" };
+    user.password = newPassword;
+    users[username] = user;
+    await saveUsers(users);
+    return { ok: true };
+  }
+
+  async function handleLogout() {
+    try {
+      await AsyncStorage.removeItem("plantdoctor:auth");
+    } catch {
+      // ignore
+    }
+    setAuthUser(null);
+    setIsAuthenticated(false);
+    setIsProfileOpen(false);
+  }
 
   const plants = useMemo(() => {
     const wave = Math.sin(tick / 2);
@@ -1372,6 +1773,11 @@ export default function App() {
     }
   }
 
+  function handleTabPress(tab: TabKey) {
+    setIsProfileOpen(false);
+    setActiveTab(tab);
+  }
+
   async function runPlantScan(uri = leafImageUri) {
     if (!uri) {
       setScan(waitingDiagnosis);
@@ -1493,21 +1899,46 @@ export default function App() {
     }
   }
 
+  if (!isAuthenticated) {
+    return (
+      <SafeAreaView style={styles.app}>
+        <StatusBar style="dark" />
+        <View style={styles.contentInner}>
+          <LoginScreen onLogin={handleLogin} onSignUp={handleSignUp} onResetPassword={handleResetPassword} />
+        </View>
+      </SafeAreaView>
+    );
+  }
+
   return (
     <SafeAreaView style={styles.app}>
       <StatusBar style="dark" />
       <View style={styles.header}>
         <GrowMindLogo />
-        <View style={styles.liveBadge}>
-          <View style={styles.liveDot} />
-          <Text style={styles.liveText}>LIVE</Text>
+        <View style={{ flexDirection: "row", alignItems: "center", gap: 8 }}>
+          <View style={styles.liveBadge}>
+            <View style={styles.liveDot} />
+            <Text style={styles.liveText}>LIVE</Text>
+          </View>
+          <Pressable onPress={() => setIsProfileOpen(true)} style={styles.profileButton}>
+            <View style={styles.profileGlyph}>
+              <View style={styles.profileGlyphHead} />
+              <View style={styles.profileGlyphBody} />
+            </View>
+          </Pressable>
         </View>
       </View>
 
-      <ScrollView
-        style={styles.content}
-        contentContainerStyle={styles.contentInner}
-      >
+      {isProfileOpen ? (
+        <View style={styles.contentInner}>
+          <ProfileScreen
+            username={authUser}
+            onClose={() => setIsProfileOpen(false)}
+            onSignOut={handleLogout}
+          />
+        </View>
+      ) : (
+        <ScrollView style={styles.content} contentContainerStyle={styles.contentInner}>
         {activeTab === "My Farm" && (
           <MyFarmPage
             plants={plants}
@@ -1570,12 +2001,13 @@ export default function App() {
           />
         )}
       </ScrollView>
+      )}
 
       <View style={styles.tabBar}>
         {tabs.map((tab) => (
           <Pressable
             key={tab}
-            onPress={() => setActiveTab(tab)}
+            onPress={() => handleTabPress(tab)}
             style={[styles.tabItem, activeTab === tab && styles.tabItemActive]}
           >
             <TabIcon tab={tab} active={activeTab === tab} />
@@ -3190,6 +3622,71 @@ const styles = StyleSheet.create({
     fontWeight: "900",
     fontSize: 12,
   },
+  signOutButton: {
+    width: 40,
+    height: 40,
+    borderRadius: 20,
+    backgroundColor: "#e3f1e8",
+    alignItems: "center",
+    justifyContent: "center",
+  },
+  profileButton: {
+    width: 40,
+    height: 40,
+    borderRadius: 20,
+    backgroundColor: "#214b35",
+    alignItems: "center",
+    justifyContent: "center",
+    borderWidth: 0,
+  },
+  profileGlyph: {
+    width: 18,
+    height: 18,
+    alignItems: "center",
+    justifyContent: "center",
+  },
+  profileGlyphHead: {
+    width: 7,
+    height: 7,
+    borderRadius: 3.5,
+    backgroundColor: "#ffffff",
+    marginBottom: 2,
+  },
+  profileGlyphBody: {
+    width: 14,
+    height: 8,
+    borderTopLeftRadius: 9,
+    borderTopRightRadius: 9,
+    borderBottomLeftRadius: 4,
+    borderBottomRightRadius: 4,
+    backgroundColor: "#ffffff",
+  },
+  profileInitials: {
+    color: "#214b35",
+    fontWeight: "900",
+    fontSize: 16,
+  },
+  profileIcon: {
+    color: "#ffffff",
+    fontSize: 18,
+    lineHeight: 20,
+  },
+  signOutIcon: {
+    width: 20,
+    height: 20,
+  },
+  signOutSymbol: {
+    color: "#235b37",
+    fontSize: 18,
+    fontWeight: "900",
+  },
+  loginLogo: {
+    width: 72,
+    height: 72,
+    borderRadius: 12,
+    backgroundColor: "#ffffff",
+    padding: 6,
+  },
   deleteButton: {
     backgroundColor: "#fde8e3",
   },
@@ -3428,6 +3925,7 @@ const styles = StyleSheet.create({
     padding: 7,
     flexDirection: "row",
     gap: 5,
+    zIndex: 20,
   },
   tabItem: {
     flex: 1,
