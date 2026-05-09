@@ -1,5 +1,5 @@
 import { Pressable, ScrollView, Text, View } from "react-native";
-import { LineChart, PageIntro, ProgressBar, SectionTitle, SensorCard, StatCard, clamp, cropTargets, daysBetween, styles, type Plant, within } from "../shared";
+import { LineChart, PageIntro, ProgressBar, SectionTitle, SensorCard, StatCard, clamp, cropTargets, daysBetween, formatDateDisplay, styles, type Plant, within } from "../shared";
 
 export function MyPlantsPage({
   plants,
@@ -65,7 +65,7 @@ export function MyPlantsPage({
           <View style={styles.cardHeaderText}>
             <Text style={styles.cardTitle}>{selectedPlant.name}</Text>
             <Text style={styles.bodyText}>
-              {selectedPlant.variety} - planted {selectedPlant.plantedDate}
+              {selectedPlant.variety} - planted {formatDateDisplay(selectedPlant.plantedDate)}
             </Text>
           </View>
           <Pressable onPress={onRefresh} style={styles.smallButton}>

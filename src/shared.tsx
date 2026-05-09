@@ -45,6 +45,29 @@ export type CalendarItem = {
   harvestDate: string;
 };
 
+export type HomeAlert = {
+  id: string;
+  plantId: string;
+  sectionId: string;
+  section: string;
+  plantName: string;
+  issue: string;
+  severity: "High" | "Medium" | "Low";
+  recommendation: string;
+  actionField: "pump" | "fan" | "nutrient" | "led";
+  actionDelta: number;
+};
+
+export type HarvestReadiness = {
+  plantId: string;
+  plantName: string;
+  section: string;
+  harvestDate: string;
+  daysLeft: number;
+  score: number;
+  status: "Ready" | "Almost Ready" | "Delayed";
+};
+
 export type DiagnosisMetrics = {
   plantScore: number;
   greenRatio: number;
@@ -87,7 +110,8 @@ export type UserRecord = {
   phone?: string;
   email?: string;
 };
-export const tabs: TabKey[] = ["My Farm", "My Plants", "Home", "Calendar", "Doctor"];
+
+export const tabs: TabKey[] = ["My Farm", "My Plants", "Home", "Calendar", "Doctor"];
 
 export const cropTargets: Record<
   CropKey,
@@ -476,6 +500,17 @@ export function formatDateLocal(date: Date) {
   const month = `${date.getMonth() + 1}`.padStart(2, "0");
   const day = `${date.getDate()}`.padStart(2, "0");
   return `${year}-${month}-${day}`;
+}
+
+export function formatDateDisplay(date: string | Date) {
+  const value = typeof date === "string" ? new Date(`${date}T00:00:00`) : date;
+  if (Number.isNaN(value.getTime())) {
+    return typeof date === "string" ? date : "--/--/----";
+  }
+  const day = `${value.getDate()}`.padStart(2, "0");
+  const month = `${value.getMonth() + 1}`.padStart(2, "0");
+  const year = value.getFullYear();
+  return `${day}/${month}/${year}`;
 }
 
 export function classifyPlantImageFromMetrics(
@@ -1319,14 +1354,22 @@ export function ControlAdjuster({
         <Pressable
           disabled={disabled}
           onPress={onMinus}
-          style={[styles.adjustButton, disabled && styles.adjustButtonDisabled]}
+          style={({ pressed }) => [
+            styles.adjustButton,
+            disabled && styles.adjustButtonDisabled,
+            pressed && !disabled && styles.buttonPressed,
+          ]}
         >
           <Text style={styles.adjustText}>-</Text>
         </Pressable>
         <Pressable
           disabled={disabled}
           onPress={onPlus}
-          style={[styles.adjustButton, disabled && styles.adjustButtonDisabled]}
+          style={({ pressed }) => [
+            styles.adjustButton,
+            disabled && styles.adjustButtonDisabled,
+            pressed && !disabled && styles.buttonPressed,
+          ]}
         >
           <Text style={styles.adjustText}>+</Text>
         </Pressable>
@@ -1601,6 +1644,116 @@ export const styles = StyleSheet.create({
     padding: 16,
     gap: 8,
   },
+  impactGrid: {
+    flexDirection: "row",
+    flexWrap: "wrap",
+    gap: 10,
+  },
+  impactCard: {
+    width: "48.4%",
+    backgroundColor: "#ffffff",
+    borderRadius: 8,
+    borderWidth: 1,
+    borderColor: "#dce5dc",
+    padding: 12,
+    gap: 4,
+  },
+  impactCardWide: {
+    width: "100%",
+  },
+  impactValue: {
+    color: "#17251d",
+    fontSize: 20,
+    fontWeight: "900",
+  },
+  impactNote: {
+    color: "#6a766f",
+    fontSize: 11,
+    fontWeight: "800",
+  },
+  readinessList: {
+    gap: 8,
+  },
+  readinessCard: {
+    backgroundColor: "#ffffff",
+    borderRadius: 8,
+    borderWidth: 1,
+    borderColor: "#dce5dc",
+    padding: 12,
+    gap: 6,
+  },
+  readinessHeader: {
+    flexDirection: "row",
+    justifyContent: "space-between",
+    alignItems: "center",
+    gap: 10,
+  },
+  readinessBadge: {
+    borderRadius: 7,
+    paddingHorizontal: 10,
+    paddingVertical: 5,
+  },
+  readinessBadgeReady: {
+    backgroundColor: "#2d7d4a",
+  },
+  readinessBadgeAlmost: {
+    backgroundColor: "#e0a33a",
+  },
+  readinessBadgeDelayed: {
+    backgroundColor: "#c14f3d",
+  },
+  readinessBadgeText: {
+    color: "#ffffff",
+    fontSize: 11,
+    fontWeight: "900",
+  },
+  alertCard: {
+    backgroundColor: "#ffffff",
+    borderRadius: 8,
+    borderWidth: 1,
+    borderColor: "#dce5dc",
+    padding: 12,
+    gap: 8,
+    marginBottom: 8,
+  },
+  alertHead: {
+    flexDirection: "row",
+    justifyContent: "space-between",
+    alignItems: "center",
+    gap: 8,
+  },
+  alertSeverity: {
+    borderRadius: 7,
+    paddingHorizontal: 8,
+    paddingVertical: 4,
+  },
+  alertSeverityHigh: {
+    backgroundColor: "#c14f3d",
+  },
+  alertSeverityMedium: {
+    backgroundColor: "#e0a33a",
+  },
+  alertSeverityLow: {
+    backgroundColor: "#5f8e6d",
+  },
+  alertSeverityText: {
+    color: "#ffffff",
+    fontSize: 11,
+    fontWeight: "900",
+  },
+  alertActionButton: {
+    borderRadius: 8,
+    backgroundColor: "#e3f1e8",
+    borderWidth: 1,
+    borderColor: "#c9dfcf",
+    alignItems: "center",
+    paddingVertical: 9,
+  },
+  alertActionText: {
+    color: "#235b37",
+    fontSize: 12,
+    fontWeight: "900",
+  },
   heroLabel: {
     color: "#66736b",
     fontSize: 13,
@@ -1869,6 +2022,10 @@ export const styles = StyleSheet.create({
   adjustButtonDisabled: {
     backgroundColor: "#a8b5ad",
   },
+  buttonPressed: {
+    opacity: 0.86,
+    transform: [{ scale: 0.98 }],
+  },
   adjustText: {
     color: "#ffffff",
     fontSize: 18,
@@ -1981,6 +2138,99 @@ export const styles = StyleSheet.create({
   },
   dayTextSelected: {
     color: "#ffffff",
+  },
+  dayCellToday: {
+    borderColor: "#86b696",
+    borderWidth: 2,
+  },
+  dayEventRow: {
+    flexDirection: "row",
+    gap: 2,
+    marginTop: 2,
+  },
+  dayEventBadge: {
+    borderRadius: 4,
+    paddingHorizontal: 3,
+    paddingVertical: 1,
+  },
+  dayEventBadgePlanted: {
+    backgroundColor: "#79b18a",
+  },
+  dayEventBadgeHarvest: {
+    backgroundColor: "#f0b429",
+  },
+  dayEventBadgeText: {
+    color: "#ffffff",
+    fontSize: 8,
+    fontWeight: "900",
+  },
+  calendarLegendRow: {
+    marginTop: 10,
+    flexDirection: "row",
+    gap: 10,
+  },
+  calendarLegendItem: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 6,
+  },
+  legendSwatch: {
+    width: 10,
+    height: 10,
+    borderRadius: 3,
+  },
+  dateDetailRow: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 8,
+    backgroundColor: "#f7faf7",
+    borderRadius: 8,
+    borderWidth: 1,
+    borderColor: "#dce5dc",
+    padding: 10,
+  },
+  dateDetailType: {
+    borderRadius: 6,
+    paddingHorizontal: 8,
+    paddingVertical: 6,
+  },
+  reminderRow: {
+    flexDirection: "row",
+    gap: 8,
+    marginTop: 4,
+  },
+  reminderButton: {
+    flex: 1,
+    borderRadius: 8,
+    borderWidth: 1,
+    borderColor: "#d6e5da",
+    backgroundColor: "#f4faf6",
+    alignItems: "center",
+    paddingVertical: 8,
+  },
+  weeklyPlanList: {
+    gap: 8,
+  },
+  weeklyPlanItem: {
+    backgroundColor: "#ffffff",
+    borderRadius: 8,
+    borderWidth: 1,
+    borderColor: "#dce5dc",
+    padding: 12,
+    gap: 4,
+  },
+  calendarQuickRow: {
+    flexDirection: "row",
+    gap: 8,
+  },
+  quickActionButton: {
+    flex: 1,
+    borderRadius: 8,
+    borderWidth: 1,
+    borderColor: "#c9dfcf",
+    backgroundColor: "#eef7f1",
+    alignItems: "center",
+    paddingVertical: 10,
   },
   eventDot: {
     width: 5,
@@ -2287,6 +2537,22 @@ export const styles = StyleSheet.create({
     fontSize: 13,
     lineHeight: 19,
     fontWeight: "700",
+  },
+  explainCard: {
+    backgroundColor: "#f8fcf9",
+    borderRadius: 8,
+    borderWidth: 1,
+    borderColor: "#dcebdc",
+    padding: 14,
+    gap: 8,
+  },
+  checklistCard: {
+    backgroundColor: "#ffffff",
+    borderRadius: 8,
+    borderWidth: 1,
+    borderColor: "#dce5dc",
+    padding: 14,
+    gap: 6,
   },
   historyList: {
     backgroundColor: "#ffffff",

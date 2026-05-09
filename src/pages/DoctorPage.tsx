@@ -24,6 +24,29 @@ export function DoctorPage({
   const report = createScanReport(latestHistory, scan);
   const treatmentSteps = getTreatmentSteps(scan);
   const preventionTips = getPreventionTips(scan);
+  const explainReasons = [
+    !scan.isPlant
+      ? "Image confidence says this may not be a leaf-dominant plant photo."
+      : `Diagnosis confidence is ${scan.confidence}%, based on color and texture traits.`,
+    scan.metrics
+      ? `Pixel profile: green ${scan.metrics.greenRatio}% | yellow ${scan.metrics.yellowRatio}% | brown ${scan.metrics.brownRatio}%.`
+      : "No pixel metrics were available, so diagnosis relies on coarse visual features.",
+    scan.aiLabel
+      ? `Closest AI pattern match: ${scan.aiLabel}.`
+      : "No specific disease label was returned by the model.",
+  ];
+  const confidenceGuidance =
+    scan.confidence >= 85
+      ? "High confidence: safe to apply treatment plan immediately."
+      : scan.confidence >= 65
+        ? "Medium confidence: apply treatment and rescan after physical checks."
+        : "Low confidence: retake image in brighter light before major intervention.";
+  const physicalChecklist = [
+    "Inspect underside of leaves for mites, eggs, or fungal spots.",
+    "Confirm reservoir pH and EC are in the crop target range.",
+    "Check root color and smell for early rot signs.",
+    "Re-scan a second leaf from the same section for consistency.",
+  ];
 
   return (
     <>
@@ -50,17 +73,31 @@ export function DoctorPage({
         <View style={styles.scanActions}>
           <Pressable
             onPress={onTakePhoto}
-            style={[styles.scanButton, styles.cameraButton]}
+            style={({ pressed }) => [
+              styles.scanButton,
+              styles.cameraButton,
+              pressed && styles.buttonPressed,
+            ]}
           >
             <Text style={styles.scanButtonText}>Take photo</Text>
           </Pressable>
           <Pressable
             onPress={onPickImage}
-            style={[styles.scanButton, styles.uploadButton]}
+            style={({ pressed }) => [
+              styles.scanButton,
+              styles.uploadButton,
+              pressed && styles.buttonPressed,
+            ]}
           >
             <Text style={styles.scanButtonText}>Upload</Text>
           </Pressable>
-          <Pressable onPress={onRunScan} style={styles.scanButton}>
+          <Pressable
+            onPress={onRunScan}
+            style={({ pressed }) => [
+              styles.scanButton,
+              pressed && styles.buttonPressed,
+            ]}
+          >
             <Text style={styles.scanButtonText}>Scan</Text>
           </Pressable>
         </View>
@@ -69,7 +106,10 @@ export function DoctorPage({
             <Pressable
               key={demo.label}
               onPress={() => onDemoScan(demo.diagnosis)}
-              style={styles.demoButton}
+              style={({ pressed }) => [
+                styles.demoButton,
+                pressed && styles.buttonPressed,
+              ]}
             >
               <Text style={styles.demoButtonText}>{demo.label}</Text>
             </Pressable>
@@ -113,6 +153,25 @@ export function DoctorPage({
             <Text style={styles.metricText}>API error: {scan.aiError}</Text>
           )}
         </View>
+      </View>
+
+      <SectionTitle title="Why This Result" action="Explainable AI" />
+      <View style={styles.explainCard}>
+        {explainReasons.map((reason) => (
+          <Text key={reason} style={styles.careText}>
+            - {reason}
+          </Text>
+        ))}
+        <Text style={styles.recommendationText}>{confidenceGuidance}</Text>
+      </View>
+
+      <SectionTitle title="Physical Check" action="Before treatment" />
+      <View style={styles.checklistCard}>
+        {physicalChecklist.map((item, index) => (
+          <Text key={item} style={styles.careText}>
+            {index + 1}. {item}
+          </Text>
+        ))}
       </View>
 
       <SectionTitle title="Care Plan" action={getRescanAdvice(scan)} />

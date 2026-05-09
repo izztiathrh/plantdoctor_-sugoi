@@ -21,6 +21,7 @@ import {
   cropHarvestDays,
   cropTargets,
   cropVarieties,
+  daysBetween,
   getAutoRecipe,
   initialCalendar,
   initialPlants,
@@ -33,6 +34,8 @@ import {
   type CropKey,
   type Diagnosis,
   type FarmSection,
+  type HarvestReadiness,
+  type HomeAlert,
   type SavedPlantDoctorState,
   type ScanHistoryItem,
   type TabKey,
@@ -240,24 +243,143 @@ export default function App() {
   }, [plantRecords, tick]);
 
   const selectedPlant =
-    plants.find((plant) => plant.id === selectedPlantId) ?? plants[0];
+    plants.find((plant) => plant.id === selectedPlantId) ??
+    plants[0] ??
+    initialPlants[0];
   const totalWater = plants
     .reduce((sum, plant) => sum + plant.waterToday, 0)
     .toFixed(1);
   const totalEnergy = plants
     .reduce((sum, plant) => sum + plant.energyToday, 0)
     .toFixed(1);
-  const avgGrowth = Math.round(
-    plants.reduce((sum, plant) => sum + plant.growthScore, 0) / plants.length,
-  );
-  const urgentAlerts = plants.filter((plant) => {
-    const target = cropTargets[plant.cropKey];
-    return (
-      !within(plant.temp, target.temp) ||
-      !within(plant.ph, target.ph) ||
-      plant.moisture < target.moisture[0]
-    );
-  });
+  const avgGrowth =
+    plants.length === 0
+      ? 0
+      : Math.round(
+          plants.reduce((sum, plant) => sum + plant.growthScore, 0) /
+            plants.length,
+        );
+
+  const urgentAlerts = plants
+    .map<HomeAlert | null>((plant) => {
+      const target = cropTargets[plant.cropKey];
+      const section = sections.find((record) => record.plantId === plant.id);
+      if (!section) return null;
+
+      if (plant.moisture < target.moisture[0]) {
+        const gap = target.moisture[0] - plant.moisture;
+        return {
+          id: `${plant.id}-moisture`,
+          plantId: plant.id,
+          sectionId: section.id,
+          section: section.name,
+          plantName: plant.name,
+          issue: "Low moisture",
+          severity: gap >= 10 ? "High" : "Medium",
+          recommendation: `Moisture is ${plant.moisture}% but target starts at ${target.moisture[0]}%. Increase pump output now.`,
+          actionField: "pump",
+          actionDelta: gap >= 10 ? 14 : 8,
+        };
+      }
+
+      if (plant.temp > target.temp[1]) {
+        const gap = plant.temp - target.temp[1];
+        return {
+          id: `${plant.id}-temp-high`,
+          plantId: plant.id,
+          sectionId: section.id,
+          section: section.name,
+          plantName: plant.name,
+          issue: "Temperature too high",
+          severity: gap >= 3 ? "High" : "Medium",
+          recommendation: `Temperature is ${plant.temp}C above target max ${target.temp[1]}C. Increase fan cooling and airflow.`,
+          actionField: "fan",
+          actionDelta: gap >= 3 ? 14 : 8,
+        };
+      }
+
+      if (plant.temp < target.temp[0]) {
+        const gap = target.temp[0] - plant.temp;
+        return {
+          id: `${plant.id}-temp-low`,
+          plantId: plant.id,
+          sectionId: section.id,
+          section: section.name,
+          plantName: plant.name,
+          issue: "Temperature too low",
+          severity: gap >= 2 ? "Medium" : "Low",
+          recommendation: `Temperature is ${plant.temp}C below target minimum ${target.temp[0]}C. Increase LED warmth to stabilize growth.`,
+          actionField: "led",
+          actionDelta: gap >= 2 ? 10 : 6,
+        };
+      }
+
+      if (!within(plant.ph, target.ph)) {
+        const gap =
+          plant.ph < target.ph[0]
+            ? target.ph[0] - plant.ph
+            : plant.ph - target.ph[1];
+        return {
+          id: `${plant.id}-ph`,
+          plantId: plant.id,
+          sectionId: section.id,
+          section: section.name,
+          plantName: plant.name,
+          issue: "pH out of range",
+          severity: gap >= 0.8 ? "High" : "Medium",
+          recommendation: `pH is ${plant.ph} while target range is ${target.ph[0]}-${target.ph[1]}. Increase nutrient correction dosing.`,
+          actionField: "nutrient",
+          actionDelta: gap >= 0.8 ? 12 : 8,
+        };
+      }
+
+      return null;
+    })
+    .filter((alert): alert is HomeAlert => Boolean(alert));
+
+  const harvestReadiness = plants
+    .map<HarvestReadiness>((plant) => {
+      const schedule = calendarItems.find((item) => item.plantId === plant.id);
+      const harvestDate =
+        schedule?.harvestDate ?? addDays(plant.plantedDate, plant.harvestDay);
+      const daysLeft = daysBetween("2026-05-05", harvestDate);
+      const target = cropTargets[plant.cropKey];
+      const stabilityPenalty =
+        (within(plant.temp, target.temp) ? 0 : 12) +
+        (within(plant.ph, target.ph) ? 0 : 12) +
+        (plant.moisture >= target.moisture[0] ? 0 : 16);
+      const stabilityScore = clamp(100 - stabilityPenalty, 35, 100);
+      const timingScore =
+        daysLeft === 0 ? 100 : daysLeft <= 3 ? 88 : daysLeft <= 7 ? 72 : 55;
+      const score = Math.round(
+        plant.growthScore * 0.5 + timingScore * 0.3 + stabilityScore * 0.2,
+      );
+      const status = score >= 85 ? "Ready" : score >= 70 ? "Almost Ready" : "Delayed";
+
+      return {
+        plantId: plant.id,
+        plantName: plant.name,
+        section: plant.section,
+        harvestDate,
+        daysLeft,
+        score,
+        status,
+      };
+    })
+    .sort((a, b) => b.score - a.score);
+
+  const estimatedHarvestThisWeek = harvestReadiness.filter(
+    (entry) => entry.daysLeft <= 7,
+  ).length;
+  const baselineWater = plants.length * 5.8;
+  const waterSavedLiters = Math.max(0, baselineWater - Number(totalWater)).toFixed(1);
+  const atRiskPercent =
+    plants.length === 0
+      ? 0
+      : Math.round((urgentAlerts.length / plants.length) * 100);
+  const nextHarvest = [...calendarItems].sort((left, right) =>
+    left.harvestDate.localeCompare(right.harvestDate),
+  )[0];
 
   function updateSection(
     sectionId: string,
@@ -280,6 +402,23 @@ export default function App() {
         return {
           ...section,
           [field]: clamp(currentValue + deltaOrValue, 0, 100),
+        };
+      }),
+    );
+  }
+
+  function applyAlertAction(alert: HomeAlert) {
+    setSections((current) =>
+      current.map((section) => {
+        if (section.id !== alert.sectionId) return section;
+        return {
+          ...section,
+          auto: false,
+          [alert.actionField]: clamp(
+            section[alert.actionField] + alert.actionDelta,
+            0,
+            100,
+          ),
         };
       }),
     );
@@ -359,10 +498,10 @@ export default function App() {
       setSelectedPlantId(plantId);
     }
 
+    const nextPlantDate = addDays(harvestInput.trim(), 2);
     setPlantInput("New Plant");
-    setCropInput("strawberry");
-    setDateInput("2026-05-05");
-    setHarvestInput(addDays("2026-05-05", cropHarvestDays.strawberry));
+    setDateInput(nextPlantDate);
+    setHarvestInput(addDays(nextPlantDate, cropHarvestDays[cropInput]));
   }
 
   function editCalendarItem(item: CalendarItem) {
@@ -563,7 +702,10 @@ export default function App() {
           </View>
           <Pressable
             onPress={() => setIsProfileOpen(true)}
-            style={styles.profileButton}
+            style={({ pressed }) => [
+              styles.profileButton,
+              pressed && styles.buttonPressed,
+            ]}
           >
             <View style={styles.profileGlyph}>
               <View style={styles.profileGlyphHead} />
@@ -610,8 +752,13 @@ export default function App() {
               totalWater={totalWater}
               totalEnergy={totalEnergy}
               urgentAlerts={urgentAlerts}
-              nextHarvest={calendarItems[0]}
+              harvestReadiness={harvestReadiness}
+              estimatedHarvestThisWeek={estimatedHarvestThisWeek}
+              waterSavedLiters={waterSavedLiters}
+              atRiskPercent={atRiskPercent}
+              nextHarvest={nextHarvest}
               onRefresh={() => setTick((value) => (value >= 9 ? 1 : value + 1))}
+              onApplyAlertAction={applyAlertAction}
             />
           )}
 
@@ -655,7 +802,11 @@ export default function App() {
           <Pressable
             key={tab}
             onPress={() => handleTabPress(tab)}
-            style={[styles.tabItem, activeTab === tab && styles.tabItemActive]}
+            style={({ pressed }) => [
+              styles.tabItem,
+              activeTab === tab && styles.tabItemActive,
+              pressed && styles.buttonPressed,
+            ]}
           >
             <TabIcon tab={tab} active={activeTab === tab} />
             <Text
