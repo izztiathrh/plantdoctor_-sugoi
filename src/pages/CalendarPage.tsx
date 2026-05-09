@@ -1,5 +1,5 @@
 import { useMemo, useState } from "react";
-import { Pressable, Text, TextInput, View } from "react-native";
+import { Modal, Pressable, Text, TextInput, View } from "react-native";
 import { PageIntro, SectionTitle, addDays, cropHarvestDays, cropLabels, daysBetween, formatDateDisplay, formatDateLocal, formatMonth, getMonthDays, styles, type CalendarItem, type CropKey } from "../shared";
 
 type CalendarDateEvent = {
@@ -41,6 +41,8 @@ export function CalendarPage({
   onDelete: (id: string) => void;
 }) {
   const [reminderMessage, setReminderMessage] = useState("");
+  const [pickerTarget, setPickerTarget] = useState<"planted" | "harvest" | null>(null);
+  const [pickerMonth, setPickerMonth] = useState(calendarMonth);
   const days = getMonthDays(calendarMonth);
   const month = calendarMonth.getMonth();
   const year = calendarMonth.getFullYear();
@@ -58,6 +60,33 @@ export function CalendarPage({
     {},
   );
   const selectedDateEvents = dateInput ? (eventsByDate[dateInput] ?? []) : [];
+  const pickerDays = getMonthDays(pickerMonth);
+  const pickerMonthNumber = pickerMonth.getMonth();
+  const pickerYear = pickerMonth.getFullYear();
+
+  function openDatePicker(target: "planted" | "harvest") {
+    const sourceDate = target === "planted" ? dateInput : harvestInput;
+    const parsed = /^\d{4}-\d{2}-\d{2}$/.test(sourceDate)
+      ? new Date(`${sourceDate}T00:00:00`)
+      : calendarMonth;
+    const baseMonth = Number.isNaN(parsed.getTime())
+      ? calendarMonth
+      : new Date(parsed.getFullYear(), parsed.getMonth(), 1);
+    setPickerMonth(baseMonth);
+    setPickerTarget(target);
+  }
+
+  function onSelectPickerDate(iso: string) {
+    if (pickerTarget === "planted") {
+      setDateInput(iso);
+    } else {
+      setHarvestInput(iso);
+    }
+    setPickerTarget(null);
+  }
+
+  const pickerTitle =
+    pickerTarget === "planted" ? "Select planted date" : "Select harvest date";
   const weeklyEvents = useMemo(() => {
     const today = new Date(`${todayIso}T00:00:00`);
     const end = new Date(today);
@@ -335,18 +364,28 @@ export function CalendarPage({
             Harvest date: {formatDateDisplay(harvestInput)}
           </Text>
         </View>
-        <TextInput
-          style={styles.input}
-          value={dateInput}
-          onChangeText={setDateInput}
-          placeholder="Planted date (YYYY-MM-DD, advanced)"
-        />
-        <TextInput
-          style={styles.input}
-          value={harvestInput}
-          onChangeText={setHarvestInput}
-          placeholder="Harvest date (YYYY-MM-DD, advanced)"
-        />
+        <Text style={styles.sensorLabel}>Planted date</Text>
+        <Pressable
+          onPress={() => openDatePicker("planted")}
+          style={({ pressed }) => [
+            styles.input,
+            { justifyContent: "center" },
+            pressed && styles.buttonPressed,
+          ]}
+        >
+          <Text style={styles.cardTitle}>{formatDateDisplay(dateInput)}</Text>
+        </Pressable>
+        <Text style={styles.sensorLabel}>Harvest date</Text>
+        <Pressable
+          onPress={() => openDatePicker("harvest")}
+          style={({ pressed }) => [
+            styles.input,
+            { justifyContent: "center" },
+            pressed && styles.buttonPressed,
+          ]}
+        >
+          <Text style={styles.cardTitle}>{formatDateDisplay(harvestInput)}</Text>
+        </Pressable>
         <View style={styles.suggestionBox}>
           <Text style={styles.recommendationText}>
             {cropLabels[cropInput]} usually needs {cropHarvestDays[cropInput]}{" "}
@@ -409,6 +448,98 @@ export function CalendarPage({
           </View>
         </View>
       ))}
+
+      <Modal
+        visible={pickerTarget !== null}
+        transparent
+        animationType="fade"
+        onRequestClose={() => setPickerTarget(null)}
+      >
+        <View
+          style={{
+            flex: 1,
+            backgroundColor: "rgba(17, 35, 24, 0.45)",
+            justifyContent: "center",
+            padding: 16,
+          }}
+        >
+          <View style={[styles.monthCard, { marginBottom: 0, borderWidth: 0 }]}> 
+            <View style={styles.monthHeader}>
+              <Pressable
+                onPress={() =>
+                  setPickerMonth(new Date(pickerYear, pickerMonthNumber - 1, 1))
+                }
+                style={({ pressed }) => [
+                  styles.monthButton,
+                  pressed && styles.buttonPressed,
+                ]}
+              >
+                <Text style={styles.monthButtonText}>‹</Text>
+              </Pressable>
+              <Text style={styles.monthTitle}>{pickerTitle}</Text>
+              <Pressable
+                onPress={() => setPickerTarget(null)}
+                style={({ pressed }) => [
+                  styles.monthButton,
+                  pressed && styles.buttonPressed,
+                ]}
+              >
+                <Text style={styles.smallButtonText}>Close</Text>
+              </Pressable>
+            </View>
+            <Text style={[styles.metricText, { marginTop: 0, marginBottom: 8 }]}> 
+              {formatMonth(pickerMonth)}
+            </Text>
+            <View style={styles.weekRow}>
+              {["S", "M", "T", "W", "T", "F", "S"].map((day, index) => (
+                <Text key={`picker-${day}-${index}`} style={styles.weekText}>
+                  {day}
+                </Text>
+              ))}
+            </View>
+            <View style={styles.calendarGrid}>
+              {pickerDays.map((day, index) => {
+                const iso = day ? formatDateLocal(day) : undefined;
+                const isSelected =
+                  iso &&
+                  ((pickerTarget === "planted" && iso === dateInput) ||
+                    (pickerTarget === "harvest" && iso === harvestInput));
+                return (
+                  <Pressable
+                    key={`picker-${iso ?? "blank"}-${index}`}
+                    disabled={!iso}
+                    onPress={() => iso && onSelectPickerDate(iso)}
+                    style={({ pressed }) => [
+                      styles.dayCell,
+                      isSelected && styles.dayCellSelected,
+                      pressed && iso && styles.buttonPressed,
+                    ]}
+                  >
+                    <Text
+                      style={[styles.dayText, isSelected && styles.dayTextSelected]}
+                    >
+                      {day ? day.getDate() : ""}
+                    </Text>
+                  </Pressable>
+                );
+              })}
+            </View>
+            <View style={{ flexDirection: "row", gap: 8, marginTop: 10 }}>
+              <Pressable
+                onPress={() =>
+                  setPickerMonth(new Date(pickerYear, pickerMonthNumber + 1, 1))
+                }
+                style={({ pressed }) => [
+                  styles.quickActionButton,
+                  pressed && styles.buttonPressed,
+                ]}
+              >
+                <Text style={styles.smallButtonText}>Next month</Text>
+              </Pressable>
+            </View>
+          </View>
+        </View>
+      </Modal>
     </>
   );
 }

@@ -517,9 +517,27 @@ export default function App() {
     setHarvestInput(addDays(dateInput, cropHarvestDays[cropKey]));
   }
 
+  function normalizeDateInput(value: string) {
+    const trimmed = value.trim();
+    const slashDate = trimmed.match(/^(\d{2})\/(\d{2})\/(\d{4})$/);
+    if (slashDate) {
+      const [, day, month, year] = slashDate;
+      return `${year}-${month}-${day}`;
+    }
+    return trimmed;
+  }
+
+  function isCompleteIsoDate(value: string) {
+    if (!/^\d{4}-\d{2}-\d{2}$/.test(value)) return false;
+    const parsed = new Date(`${value}T00:00:00`);
+    return !Number.isNaN(parsed.getTime());
+  }
+
   function updatePlantedDate(date: string) {
-    setDateInput(date);
-    setHarvestInput(addDays(date, cropHarvestDays[cropInput]));
+    const normalizedDate = normalizeDateInput(date);
+    setDateInput(normalizedDate);
+    if (!isCompleteIsoDate(normalizedDate)) return;
+    setHarvestInput(addDays(normalizedDate, cropHarvestDays[cropInput]));
   }
 
   function deleteCalendarItem(id: string) {
