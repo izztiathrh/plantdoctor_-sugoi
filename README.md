@@ -1,8 +1,8 @@
-# GrowMind Plant Doctor
+# Plant Doctor
 
 Smart AI plant health monitoring system built with Expo and React Native.
 
-GrowMind helps users track farm sections, monitor plant conditions, schedule harvests, and scan leaf photos for plant health diagnosis. The app works with a built-in offline image analysis fallback, and can optionally use free-tier Gemini or Hugging Face vision APIs when API keys are provided.
+PlantDoctor helps users track farm sections, monitor plant conditions, schedule harvests, and scan leaf photos for plant health diagnosis. The app works with a built-in offline image analysis fallback, and can optionally use free-tier Gemini vision APIs when API keys are provided.
 
 ## Features
 
